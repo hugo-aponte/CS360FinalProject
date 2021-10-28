@@ -99,12 +99,29 @@ int ls_dir(MINODE *mip)
 
   while (cp < buf + BLKSIZE)
   {
+    struct stat *buf;
+    buf = malloc(sizeof(struct stat));
     strncpy(temp, dp->name, dp->name_len);
     temp[dp->name_len] = 0;
-    printf("%s  ", temp);
+
+    stat(temp, buf);
+
+    // if (dp->pid == 0)
+    // {
+    //   printf("root\t");
+    // }
+    // else
+    // {
+    //   printf("user\t");
+    // }
+
+    printf("%ld\t", buf->st_size);
+    printf("%ld\t", buf->st_mtim);
+    printf("%s\n", temp);
 
     cp += dp->rec_len;
     dp = (DIR *)cp;
+    free(buf);
   }
   printf("\n");
 }
@@ -280,7 +297,7 @@ int main(int argc, char *argv[])
   running->cwd = iget(dev, 2);
   printf("root refCount = %d\n", root->refCount);
 
-  // P1 created as user process 
+  // P1 created as user process
   running = &proc[1];
   running->cwd = root;
 
