@@ -41,7 +41,7 @@ int init()
     p = &proc[i];
     p->status = READY;
     p->pid = i;
-    p->uid = p->gid = 0;
+    p->uid = p->gid = i;
     p->cwd = 0;
   }
 
@@ -124,7 +124,7 @@ int ls_file(MINODE *mip, char *name)
   }
   else
   {
-    printf("ERROR: not a file\n");
+    printf("ERROR: not a directory\n");
   }
 }
 int ls(char *pathname)
