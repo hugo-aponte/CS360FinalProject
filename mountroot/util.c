@@ -188,6 +188,19 @@ int getino(char *pathname)
    return ino;
 }
 
+int findparent(char *pathname)
+{
+   int i = 0;
+   while(i < strlen(pathname))
+   {
+      if(pathname[i] == '/')
+         return 1;
+      
+      i++;
+   }
+   return 0;
+}
+
 // These 2 functions are needed for pwd()
 int findmyname(MINODE *parent, u32 myino, char myname[ ]) 
 {
