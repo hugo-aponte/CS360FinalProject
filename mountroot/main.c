@@ -158,23 +158,28 @@ void rpwd(MINODE *wd)
   get_block(wd->dev, wd->INODE.i_block[0], buf);
   dp = (DIR *)buf;
   cp = buf;
+  // printf("dp name: %s\n", dp->name);
 
   // search through cwd for my_ino and parent ino
-  while (cp > buf + BLKSIZE)
+  while (cp < buf + BLKSIZE)
   {
     strcpy(dirname, dp->name);
     dirname[dp->name_len] = '\0';
+    // printf("dirname: %s\n", dirname);
 
     // check for "." dir
     if (strcmp(dirname, ".") == 0)
     {
       my_ino = dp->inode;
+      // printf("found myino: %d\n", my_ino);
     }
 
     // check for ".." dir
     if (strcmp(dirname, "..") == 0)
     {
       parent_ino = dp->inode;
+      // printf("found parentino: %d\n", parent_ino);
+
     }
 
     // advance to next record
