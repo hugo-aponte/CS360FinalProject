@@ -280,7 +280,9 @@ int main(int argc, char *argv[])
   running->cwd = iget(dev, 2);
   printf("root refCount = %d\n", root->refCount);
 
-  // WRTIE code here to create P1 as a USER process
+  // P1 created as user process 
+  running = &proc[1];
+  running->cwd = root;
 
   while (1)
   {
