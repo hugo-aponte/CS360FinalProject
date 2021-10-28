@@ -316,7 +316,7 @@ void rpwd(MINODE *wd)
   cp = buf;
 
   // search through cwd for my_ino and parent ino
-  while (cp > buf + BLKSIZE)
+  while (cp < buf + BLKSIZE)
   {
     strcpy(dirname, dp->name);
     dirname[dp->name_len] = '\0';
