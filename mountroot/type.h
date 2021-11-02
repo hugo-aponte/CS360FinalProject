@@ -56,6 +56,21 @@ typedef struct proc
   MINODE *cwd; // CWD directory pointer
 } PROC;
 
+typedef struct mtable
+{
+  int dev;
+  int ninodes;
+  int nblocks;
+  int free_blocks;
+  int free_inodes;
+  int bmap;
+  int imap;
+  int iblock;
+  MINODE *mntDirPtr;
+  char devName[64];
+  char mntName[64];
+} MTABLE;
+
 int get_block(int dev, int blk, char *buf);
 int put_block(int dev, int blk, char *buf);
 int tokenize(char *pathname);
