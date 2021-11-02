@@ -18,7 +18,7 @@ extern char line[128], cmd[32], pathname[128];
 int get_block(int dev, int blk, char *buf);
 int tokenize(char *pathname);
 MINODE *iget(int dev, int ino);
-void iput(MINODE *mip);
+int iput(MINODE *mip);
 int search(MINODE *mip, char *name);
 int getino(char *pathname);
 int findparent(char *pathname);

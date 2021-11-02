@@ -100,30 +100,32 @@ MINODE *iget(int dev, int ino)
    return 0;
 }
 
-void iput(MINODE *mip)
+int midalloc(MINODE *mip) // release a used minode
 {
+   mip->refCount = 0;
+}
+
+int iput(MINODE *mip)
+{
+   INODE *ip;
    int i, block, offset;
    char buf[BLKSIZE];
-   INODE *ip;
-
    if (mip == 0)
-      return;
-
-   mip->refCount--;
-
+      return 0;     // SUS origionally returned nothing, but was giving error
+   mip->refCount--; // dec refCount by 1
    if (mip->refCount > 0)
-      return;
-   if (!mip->dirty)
-      return;
-
-   /* write INODE back to disk */
-   /**************** NOTE ******************************
-  For mountroot, we never MODIFY any loaded INODE
-                 so no need to write it back
-  FOR LATER WROK: MUST write INODE back to disk if refCount==0 && DIRTY
-
-  Write YOUR code here to write INODE back to disk
- *****************************************************/
+      return 0; // still has user SUS origionally returned nothing, but was giving error
+   if (mip->dirty == 0)
+      return 0; // no need to write back SUS origionally returned nothing, but was giving error
+   // write INODE back to disk
+   block = (mip->ino - 1) / 8 + iblk;
+   offset = (mip->ino - 1) % 8;
+   // get block containing this inode
+   get_block(mip->dev, block, buf);
+   ip = (INODE *)buf + offset;      // ip points at INODE
+   *ip = mip->INODE;                // copy INODE to inode in block
+   put_block(mip->dev, block, buf); // write back to disk
+   midalloc(mip);                   // mip->refCount = 0;
 }
 
 int search(MINODE *mip, char *name)
