@@ -31,3 +31,24 @@ int ialloc(int dev) // allocate an inode number from inode_bitmap
     }
     return 0;
 }
+
+int balloc(int dev)
+{
+    int i;
+    char buf[BLKSIZE];
+
+    // read inode_bitmap block
+    get_block(dev, bmap, buf);
+
+    for (i = 0; i < ninodes; i++)
+    {
+        if (tst_bit(buf, i) == 0)
+        {
+            set_bit(buf, i);
+            put_block(dev, bmap, buf);
+            printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
+            return i + 1;
+        }
+    }
+    return 0;
+}
