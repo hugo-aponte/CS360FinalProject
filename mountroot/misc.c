@@ -1,4 +1,4 @@
-#include "type.h"
+#include "misc.h"
 
 int stat(int dev, char *pathname)
 {
