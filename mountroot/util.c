@@ -15,6 +15,73 @@ extern int nblocks, ninodes, bmap, imap, iblk;
 
 extern char line[128], cmd[32], pathname[128];
 
+int tst_bit(char *buf, int bit)
+{
+    return buf[bit / 8] & (1 << (bit % 8));
+}
+
+int set_bit(char *buf, int bit)
+{
+    buf[bit / 8] |= (1 << (bit % 8));
+}
+
+int ialloc(int dev) // allocate an inode number from inode_bitmap
+{
+    int i;
+    char buf[BLKSIZE];
+
+    // read inode_bitmap block
+    get_block(dev, imap, buf);
+
+    for (i = 0; i < ninodes; i++)
+    {
+        if (tst_bit(buf, i) == 0)
+        {
+            set_bit(buf, i);
+            put_block(dev, imap, buf);
+            printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+int balloc(int dev)
+{
+    int i;
+    char buf[BLKSIZE];
+
+    // read inode_bitmap block
+    get_block(dev, bmap, buf);
+
+    for (i = 0; i < ninodes; i++)
+    {
+        if (tst_bit(buf, i) == 0)
+        {
+            set_bit(buf, i);
+            put_block(dev, bmap, buf);
+            printf("allocated block number = %d\n", i + 1); // bits count from 0; ino from 1
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+int idealLength(int len) { return 4 * ((8 + len + 3) / 4); }
+
+int decFreeInodes(int dev, char *buf)
+{
+    // dec free inodes count in SUPER and GD
+    get_block(dev, 1, buf);
+    sp = (SUPER *)buf;
+    sp->s_free_inodes_count--;
+    put_block(dev, 1, buf);
+    get_block(dev, 2, buf);
+    gp = (GD *)buf;
+    gp->bg_free_inodes_count--;
+    put_block(dev, 2, buf);
+}
+
 int get_block(int dev, int blk, char *buf)
 {
    lseek(dev, (long)blk * BLKSIZE, 0);

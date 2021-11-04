@@ -83,6 +83,12 @@ int findino(MINODE *mip, u32 *myino); // myino = i# of . return i# of ..
 int tokenize(char *pathname);
 int iput(MINODE *mip);
 int findparent(char *pathname);
+int idealLength(int len);
+int decFreeInodes(int dev, char *buf);
+int tst_bit(char *buf, int bit);
+int set_bit(char *buf, int bit);
+int balloc(int dev);
+int ialloc(int dev); // allocate an inode number from inode_bitmap
 
 // cd_ls_pwd
 int cd();
@@ -94,12 +100,11 @@ void rpwd(MINODE *wd);
 int quit();
 
 // mkdir_creat
+int enter_child(MINODE *pip, DIR *fPtr);
 DIR kmkdir(MINODE *pmip, char *fileName);
 int myMkdir();
-int tst_bit(char *buf, int bit);
-int set_bit(char *buf, int bit);
-int balloc(int dev);
-int ialloc(int dev); // allocate an inode number from inode_bitmap
+void kcreat(MINODE *pmip, char *filename);
+int myCreat();
 
 // misc
 int myStat(int dev, char *pathname);

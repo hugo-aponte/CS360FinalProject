@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     printf("P%d running: ", running->pid);
-    printf("input command : [ls|cd|pwd|mkdir|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -143,5 +143,7 @@ int main(int argc, char *argv[])
       quit();
     else if (strcmp(cmd, "mkdir") == 0)
       myMkdir();
+    else if(strcmp(cmd, "creat") == 0)
+      myCreat();
   }
 }

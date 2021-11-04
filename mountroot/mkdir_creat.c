@@ -12,73 +12,7 @@ extern int fd, dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
 extern char line[128], cmd[32], pathname[128];
 
-int tst_bit(char *buf, int bit)
-{
-    return buf[bit / 8] & (1 << (bit % 8));
-}
-
-int set_bit(char *buf, int bit)
-{
-    buf[bit / 8] |= (1 << (bit % 8));
-}
-
-int ialloc(int dev) // allocate an inode number from inode_bitmap
-{
-    int i;
-    char buf[BLKSIZE];
-
-    // read inode_bitmap block
-    get_block(dev, imap, buf);
-
-    for (i = 0; i < ninodes; i++)
-    {
-        if (tst_bit(buf, i) == 0)
-        {
-            set_bit(buf, i);
-            put_block(dev, imap, buf);
-            printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
-int balloc(int dev)
-{
-    int i;
-    char buf[BLKSIZE];
-
-    // read inode_bitmap block
-    get_block(dev, bmap, buf);
-
-    for (i = 0; i < ninodes; i++)
-    {
-        if (tst_bit(buf, i) == 0)
-        {
-            set_bit(buf, i);
-            put_block(dev, bmap, buf);
-            printf("allocated block number = %d\n", i + 1); // bits count from 0; ino from 1
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
-int idealLength(int len) { return 4 * ((8 + len + 3) / 4); }
-
-int decFreeInodes(int dev, char *buf)
-{
-    // dec free inodes count in SUPER and GD
-    get_block(dev, 1, buf);
-    sp = (SUPER *)buf;
-    sp->s_free_inodes_count--;
-    put_block(dev, 1, buf);
-    get_block(dev, 2, buf);
-    gp = (GD *)buf;
-    gp->bg_free_inodes_count--;
-    put_block(dev, 2, buf);
-}
-
+// ************ mkdir *****************
 int enter_child(MINODE *pip, DIR *fPtr)
 {
     //hard part
@@ -137,9 +71,9 @@ int enter_child(MINODE *pip, DIR *fPtr)
             newFile->name_len = fPtr->name_len;
 
             // newFile should take over remaining size
-            newFile->rec_len = BLKSIZE - fPtr->rec_len;
+            newFile->rec_len = remain;
             strncpy(newFile->name, fPtr->name, fPtr->name_len);
-            // printf("putting this at pip->INODE.i_block[%d]=%d | dp: inode=%d rec_len=%d name_len=%d\n", i, pip->INODE.i_block[i], dp->inode, dp->rec_len, dp->name_len);
+            // printf("putting this at pip->INODE.i_block[%d]=%d | newfile: inode=%d rec_len=%d name_len=%d\n", i, pip->INODE.i_block[i], newFile->inode, newFile->rec_len, newFile->name_len);
 
             put_block(pip->dev, pip->INODE.i_block[i], buf);
         }
@@ -257,11 +191,110 @@ int myMkdir()
     }
     else
     {
-        printf("file %s is not a dir\n", fileName);
+        printf("file %s is not a dir\n", pathname);
     }
 
     // create the new directory in kmkdir
     kmkdir(pmip, fileName);
 
     return 0;
+}
+
+// ************ creat *****************
+int myCreat()
+{
+    int ino;
+    char fileName[128];
+    MINODE *currentMinode;
+
+    // check pathname for root or cwd
+    if (pathname[0] == '/')
+    {
+        currentMinode = root;
+    }
+    else
+    {
+        currentMinode = running->cwd;
+    }
+
+    // get parentpath and basename
+    strcpy(fileName, pathname);
+    strcpy(pathname, dirname(pathname));
+    strcpy(fileName, basename(fileName));
+    printf("path: %s ", pathname);
+    printf("file: %s ", fileName);
+
+    // get parent inode number
+    int pino = getino(pathname);
+    
+    // get parent minode with parent inode number
+    MINODE *pmip = iget(dev, pino);
+
+    // check if parent minode is a directory
+    if (S_ISDIR(pmip->INODE.i_mode))
+    {
+        // check if basename already exists in parent minode 
+        ino = search(pmip, fileName);
+        if (ino)
+        {
+            printf("file %s already exists\n", fileName);
+            return -1;
+        }
+    }
+    else
+    {
+        printf("file %s is not a dir\n", pathname);
+    }
+
+    // create the new file in kcreat
+    kcreat(pmip, fileName);
+
+    return 0;   
+}
+
+void kcreat(MINODE *pmip, char *filename)
+{
+    printf("inside my_creat\n");
+    printf("pmip->ino=%d, filename=%s\n", pmip->ino, filename);
+
+    // get ino available and blk numbers
+    int ino = ialloc(dev);
+    int blk = balloc(dev);
+
+    MINODE *mip = iget(dev, ino);
+    INODE *ip = &mip->INODE;
+
+    // write INODE into memory inode
+    ip->i_mode = 0x81A4; // File type and permissions
+    ip->i_uid = running->uid; // user id
+    ip->i_gid = running->gid; // group id
+    ip->i_size = BLKSIZE;
+    ip->i_links_count = 1;
+    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
+    ip->i_blocks = 2;
+    ip->i_block[0] = blk;
+    mip->refCount = 0;
+
+    for(int i = 1; i < 13; i++)
+    {
+        ip->i_block[i] = 0; // set other inode blocks to 0
+    }
+
+    mip->dirty = 1;
+    iput(mip);
+
+    // create new directory entry for new file
+    DIR newdir;
+    newdir.inode = ino;
+    strncpy(newdir.name, filename, strlen(filename));
+    newdir.name_len = strlen(filename);
+    newdir.rec_len = idealLength(newdir.name_len);
+
+    // enter file entry into parent directory 
+    enter_child(pmip, &newdir);
+
+    pmip->INODE.i_atime = time(0L);
+    pmip->dirty = 1;
+
+    iput(pmip);
 }
