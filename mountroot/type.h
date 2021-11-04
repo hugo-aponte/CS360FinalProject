@@ -79,12 +79,12 @@ int getino(char *pathname);
 int findmyname(MINODE *parent, u32 myino, char myname[]);
 int findino(MINODE *mip, u32 *myino); // myino = i# of . return i# of ..
 
-//util
+// util
 int tokenize(char *pathname);
 int iput(MINODE *mip);
 int findparent(char *pathname);
 
-//cd_ls_pwd
+// cd_ls_pwd
 int cd(char *pathname, int dev, PROC *running);
 int ls(char *pathname, int dev, PROC *running, MINODE *root);
 int ls_dir(MINODE *mip, int dev);
@@ -92,12 +92,16 @@ int ls_file(MINODE *mip, char *name);
 void pwd(MINODE *wd, MINODE *root);
 int quit();
 
-//mkdir_creat
+// mkdir_creat
 DIR kmkdir(MINODE *pmip, int dev, int imap, int bmap, int ninodes, PROC *running, int pino, char *fileName);
 int myMkdir(char *pathname, PROC *running, MINODE *root, int dev, int imap, int bmap, int ninodes);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
 int balloc(int dev, int imap, int bmap, int ninodes);
 int ialloc(int dev, int imap, int bmap, int ninodes); // allocate an inode number from inode_bitmap
+
+// misc
+int stat(int dev, char *pathname);
+int chmod(int dev, char *pathname, u16 mode);
 
 #endif
