@@ -93,7 +93,7 @@ void pwd(MINODE *wd, MINODE *root);
 int quit();
 
 //mkdir_creat
-int kmkdir(MINODE *pmip, int dev, int imap, int bmap, int ninodes, PROC *running, int pino);
+DIR kmkdir(MINODE *pmip, int dev, int imap, int bmap, int ninodes, PROC *running, int pino, char *fileName);
 int myMkdir(char *pathname, PROC *running, MINODE *root, int dev, int imap, int bmap, int ninodes);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);

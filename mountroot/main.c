@@ -70,7 +70,7 @@ int quit()
   exit(0);
 }
 
-char *disk = "diskimage";
+char *disk = "disk";
 int main(int argc, char *argv[])
 {
   int ino;
