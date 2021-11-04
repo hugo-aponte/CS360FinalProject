@@ -1,6 +1,4 @@
-#include "cd_ls_pwd.h"
 #include "type.h"
-#include "util.h"
 
 int cd(char *pathname, int dev, PROC *running)
 {

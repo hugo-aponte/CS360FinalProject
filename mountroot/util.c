@@ -1,6 +1,5 @@
 /*********** util.c file ****************/
 #include "type.h"
-#include "util.h"
 
 /**** globals defined in main.c file ****/
 extern MINODE minode[NMINODE];

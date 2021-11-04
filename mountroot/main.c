@@ -2,7 +2,6 @@
 *                   HEA: mount root file system                             *
 *****************************************************************************/
 #include "type.h"
-#include "cd_ls_pwd.h"
 
 extern MINODE *iget();
 
@@ -71,7 +70,7 @@ int quit()
   exit(0);
 }
 
-char *disk = "diskimage";
+char *disk = "disk";
 int main(int argc, char *argv[])
 {
   int ino;
@@ -142,5 +141,7 @@ int main(int argc, char *argv[])
       pwd(running->cwd, root);
     else if (strcmp(cmd, "quit") == 0)
       quit();
+    else if (strcmp(cmd, "mkdir") == 0)
+      myMkdir(pathname, running, root, dev, imap, bmap, ninodes);
   }
 }
