@@ -1,6 +1,6 @@
 #include "type.h"
 
-int stat(int dev, char *pathname)
+int myStat(int dev, char *pathname)
 {
     struct stat myst;
     int ino;
@@ -22,7 +22,7 @@ int stat(int dev, char *pathname)
     iput(mip);
 }
 
-int chmod(int dev, char *pathname, u16 mode)
+int myChmod(int dev, char *pathname, u16 mode)
 {
     int ino;
     MINODE *mip;

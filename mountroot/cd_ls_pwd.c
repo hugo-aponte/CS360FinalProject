@@ -1,6 +1,18 @@
 #include "type.h"
 
-int cd(char *pathname, int dev, PROC *running)
+extern MINODE minode[NMINODE];
+extern MINODE *root;
+extern PROC proc[NPROC], *running;
+
+extern char gpath[128];
+extern char *name[64];
+extern int n;
+
+extern int fd, dev;
+extern int nblocks, ninodes, bmap, imap, iblk;
+extern char line[128], cmd[32], pathname[128];
+
+int cd()
 {
     int ino = getino(pathname);
     MINODE *mip;
@@ -163,7 +175,7 @@ int ls_dir(MINODE *mip, int dev)
     }
 }
 
-int ls(char *pathname, int dev, PROC *running, MINODE *root)
+int ls()
 {
     // printf("ls: list CWD only! YOU FINISH IT for ls pathname\n");
     // if (!pathname[0])
@@ -237,7 +249,7 @@ int ls(char *pathname, int dev, PROC *running, MINODE *root)
     iput(mip);
 }
 
-void rpwd(MINODE *wd, MINODE *root)
+void rpwd(MINODE *wd)
 {
     char buf[BLKSIZE], dirname[BLKSIZE];
     int my_ino, parent_ino;
@@ -299,14 +311,14 @@ void rpwd(MINODE *wd, MINODE *root)
         cp += dp->rec_len;
         dp = (DIR *)cp;
     }
-    rpwd(parentMINODE, root);
+    rpwd(parentMINODE);
     iput(parentMINODE);
 
     printf("/%s", dirname);
     return;
 }
 
-void pwd(MINODE *wd, MINODE *root)
+void pwd(MINODE *wd)
 {
     if (wd == root)
     {
@@ -314,7 +326,7 @@ void pwd(MINODE *wd, MINODE *root)
         return;
     }
 
-    rpwd(wd, root);
+    rpwd(wd);
     printf("\n");
     return;
 }

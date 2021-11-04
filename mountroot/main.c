@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     printf("P%d running: ", running->pid);
-    printf("input command : [ls|cd|pwd|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -134,14 +134,14 @@ int main(int argc, char *argv[])
     printf("cmd=%s pathname=%s\n", cmd, pathname);
 
     if (strcmp(cmd, "ls") == 0)
-      ls(pathname, dev, running, root);
+      ls();
     else if (strcmp(cmd, "cd") == 0)
-      cd(pathname, dev, running);
+      cd();
     else if (strcmp(cmd, "pwd") == 0)
-      pwd(running->cwd, root);
+      pwd(running->cwd);
     else if (strcmp(cmd, "quit") == 0)
       quit();
     else if (strcmp(cmd, "mkdir") == 0)
-      myMkdir(pathname, running, root, dev, imap, bmap, ninodes);
+      myMkdir();
   }
 }
