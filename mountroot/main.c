@@ -15,7 +15,7 @@ int n;           // number of component strings
 
 int fd, dev;
 int nblocks, ninodes, bmap, imap, iblk;
-char line[128], cmd[32], pathname[128];
+char line[128], cmd[32], pathname[128], destination[128];
 
 // #include "cd_ls_pwd.c"
 // #include "util.c"
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     printf("P%d running: ", running->pid);
-    printf("input command : [ls|cd|pwd|mkdir|creat|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -145,5 +145,11 @@ int main(int argc, char *argv[])
       myMkdir();
     else if(strcmp(cmd, "creat") == 0)
       myCreat();
+    else if(strcmp(cmd, "link") == 0)
+    {
+      sscanf(line, "%s %s %s", cmd, pathname, destination);
+      printf("pathname=%s destination=%s\n", pathname, destination);
+      myLink();
+    }
   }
 }

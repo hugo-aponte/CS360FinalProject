@@ -106,6 +106,9 @@ int myMkdir();
 void kcreat(MINODE *pmip, char *filename);
 int myCreat();
 
+// link_unlink
+int myLink();
+
 // misc
 int myStat(int dev, char *pathname);
 int myChmod(int dev, char *pathname, u16 mode);
