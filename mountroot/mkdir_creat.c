@@ -76,6 +76,12 @@ int enter_child(MINODE *pip, DIR *fPtr)
 
             put_block(pip->dev, pip->INODE.i_block[i], buf);
         }
+        else 
+        {
+            // for later use
+            if(pip->INODE.i_block[i+1] == 0)
+                return -1;
+        }
     }
 
     // printf("exiting enter_child\n");
@@ -84,7 +90,6 @@ int enter_child(MINODE *pip, DIR *fPtr)
 }
 
 // ************ mkdir *****************
-
 int myMkdir()
 {
     int ino;
