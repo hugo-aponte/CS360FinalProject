@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   while (1)
   {
     printf("P%d running: ", running->pid);
-    printf("input command : [ls|cd|pwd|mkdir|creat|link|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|symlink|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -150,6 +150,12 @@ int main(int argc, char *argv[])
       sscanf(line, "%s %s %s", cmd, pathname, destination);
       printf("pathname=%s destination=%s\n", pathname, destination);
       myLink();
+    }
+    else if(strcmp(cmd, "symlink") == 0)
+    {
+      sscanf(line, "%s %s %s", cmd, pathname, destination);
+      printf("pathname=%s destination=%s\n", pathname, destination);
+      mySymLink();
     }
   }
 }

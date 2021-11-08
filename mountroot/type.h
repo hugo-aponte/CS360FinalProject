@@ -103,11 +103,12 @@ int quit();
 int enter_child(MINODE *pip, DIR *fPtr);
 DIR kmkdir(MINODE *pmip, char *fileName);
 int myMkdir();
-void kcreat(MINODE *pmip, char *filename);
+int kcreat(MINODE *pmip, char *filename);
 int myCreat();
 
 // link_unlink
 int myLink();
+int mySymLink();
 
 // misc
 int myStat(int dev, char *pathname);

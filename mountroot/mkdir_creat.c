@@ -252,7 +252,7 @@ int myCreat()
     return 0;   
 }
 
-void kcreat(MINODE *pmip, char *filename)
+int kcreat(MINODE *pmip, char *filename)
 {
     printf("inside my_creat\n");
     printf("pmip->ino=%d, filename=%s\n", pmip->ino, filename);
@@ -268,7 +268,7 @@ void kcreat(MINODE *pmip, char *filename)
     ip->i_mode = 0x81A4; // File type and permissions
     ip->i_uid = running->uid; // user id
     ip->i_gid = running->gid; // group id
-    ip->i_size = BLKSIZE;
+    ip->i_size = 0;
     ip->i_links_count = 1;
     ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
     ip->i_blocks = 2;
@@ -297,4 +297,7 @@ void kcreat(MINODE *pmip, char *filename)
     pmip->dirty = 1;
 
     iput(pmip);
+
+    // when this function is used by symlink, it will expect the inode number to be returned
+    return ino;
 }

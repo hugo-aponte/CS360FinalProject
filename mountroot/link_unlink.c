@@ -85,12 +85,23 @@ int myLink()
     // extract basename from newfile using buf again as an intermediate
     strcpy(buf, newfile);
     strcpy(newFileChildPath, basename(buf));
-    printf("oldfile: %s, newfile: %s\n", oldfile, newfile);
-    printf("newFileParentPath: %s, newFileChildPath: %s\n", newFileParentPath, newFileChildPath);
+    // printf("oldfile: %s, newfile: %s\n", oldfile, newfile);
+    // printf("newFileParentPath: %s, newFileChildPath: %s\n", newFileParentPath, newFileChildPath);
 
     // get parent (pino and pmip) of new file path
     npino = getino(newFileParentPath);
     npmip = iget(dev, npino);
+
+    if(!npmip)
+    {
+        printf("link: parent of destination file was not found\n");
+        return -1;
+    }
+    if(!S_ISDIR(npmip->INODE.i_mode))
+    {
+        printf("link: parent of destination file is not a directory");
+        return -1;
+    }
 
     // used for enterchild
     DIR newFileEntry;
@@ -106,5 +117,95 @@ int myLink()
     omip->dirty = 1;
     iput(omip);
     iput(npmip);
+    return 0;
+}
+
+int mySymLink()
+{
+    // note: comment references to destination = comment references to new file 
+    // printf("Inside mySymLink\n");
+
+    // nino will be used for the new file's inode number 
+    // npino will be used for the new file's parent's inode number
+    int ino, nino, npino;
+
+    // nmip will be used for the new file's MINODE associated with nino
+    // npmip will be used for the new file's parent's MINODE associated with npino
+    // the INODEs are simply references to the INODEs of their corresponding MINODEs
+    MINODE *mip, *nmip, *npmip;
+    INODE *ip, *nip, *pip;
+
+    char buf[64], destParentPath[64], destChildName[64], oldFileName[64];
+    
+    // extract oldFileName from global pathname using buf as an intermediate 
+    strcpy(buf, pathname);
+    strcpy(oldFileName, basename(buf));
+    // printf("oldFileName=%s\n", oldFileName);
+
+    // get inode number associated with source file (using global pathname)
+    ino = getino(pathname);
+
+    // get MINODE associated with inode number 
+    mip = iget(dev, ino);
+
+    // check if oldFileName is longer than book requirement
+    if(strlen(oldFileName) > 60)
+    {
+        printf("symlink: source file name is too long\n");
+        return -1;
+    }
+
+    // check if source file exists
+    if(!mip)
+    {
+        printf("symlink: source file %s does not exist\n", pathname);
+        return -1;
+    }
+
+    // extract destParentPath and destChildName from destination using dirname and basename
+    strcpy(destParentPath, destination);
+    strcpy(destChildName, destination);
+    strcpy(destParentPath, dirname(destParentPath));
+    strcpy(destChildName, basename(destChildName));
+    // printf("destParentPath=%s, destChildName=%s\n", destParentPath, destChildName);
+
+    // get inode number associated with destParentPath
+    npino = getino(destParentPath);
+    npmip = iget(dev, npino);
+
+    // check if parent directory exists
+    if(!npmip)
+    {
+        printf("symlink: destination file's parent directory was not found\n");
+        return -1;
+    }
+    if(!S_ISDIR(npmip->INODE.i_mode))
+    {
+        printf("symlink: destination file's parent is not a directory\n");
+    }
+    if(getino(destChildName))
+    {
+        printf("symlink: destination file already exists\n");
+        return -1;
+    }
+
+    // get inode number associated with destination file
+    nino = kcreat(npmip, destChildName);
+    // printf("After kcreat, nino=%d\n", nino);
+
+    // get MINODE from nino
+    nmip = iget(dev, nino);
+    nip = &nmip->INODE;
+
+    // set nip to link type, i_size to oldFileName size, and i_block to oldFileName
+    nip->i_mode = S_IFLNK | S_IRUSR | S_IWUSR | S_IXUSR | S_IRWXG | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
+    nip->i_size = strlen(oldFileName);
+    strcpy((char *)(nip->i_block), oldFileName);
+    nmip->dirty = 1;
+    npmip->dirty = 1;
+    iput(nmip);
+    iput(npmip);
+
+    // printf("Exit symlink\n");
     return 0;
 }
