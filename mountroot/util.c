@@ -17,69 +17,92 @@ extern char line[128], cmd[32], pathname[128];
 
 int tst_bit(char *buf, int bit)
 {
-    return buf[bit / 8] & (1 << (bit % 8));
+   return buf[bit / 8] & (1 << (bit % 8));
 }
 
 int set_bit(char *buf, int bit)
 {
-    buf[bit / 8] |= (1 << (bit % 8));
+   buf[bit / 8] |= (1 << (bit % 8));
+}
+
+int clr_bit(char *buf, int bit) // clear bit in char buf[BLKSIZE]
+{
+   buf[bit / 8] &= ~(1 << (bit % 8));
 }
 
 int ialloc(int dev) // allocate an inode number from inode_bitmap
 {
-    int i;
-    char buf[BLKSIZE];
+   int i;
+   char buf[BLKSIZE];
 
-    // read inode_bitmap block
-    get_block(dev, imap, buf);
+   // read inode_bitmap block
+   get_block(dev, imap, buf);
 
-    for (i = 0; i < ninodes; i++)
-    {
-        if (tst_bit(buf, i) == 0)
-        {
-            set_bit(buf, i);
-            put_block(dev, imap, buf);
-            printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
-            return i + 1;
-        }
-    }
-    return 0;
+   for (i = 0; i < ninodes; i++)
+   {
+      if (tst_bit(buf, i) == 0)
+      {
+         set_bit(buf, i);
+         put_block(dev, imap, buf);
+         printf("allocated ino = %d\n", i + 1); // bits count from 0; ino from 1
+         return i + 1;
+      }
+   }
+   return 0;
 }
 
 int balloc(int dev)
 {
-    int i;
-    char buf[BLKSIZE];
+   int i;
+   char buf[BLKSIZE];
 
-    // read inode_bitmap block
-    get_block(dev, bmap, buf);
+   // read inode_bitmap block
+   get_block(dev, bmap, buf);
 
-    for (i = 0; i < ninodes; i++)
-    {
-        if (tst_bit(buf, i) == 0)
-        {
-            set_bit(buf, i);
-            put_block(dev, bmap, buf);
-            printf("allocated block number = %d\n", i + 1); // bits count from 0; ino from 1
-            return i + 1;
-        }
-    }
-    return 0;
+   for (i = 0; i < ninodes; i++)
+   {
+      if (tst_bit(buf, i) == 0)
+      {
+         set_bit(buf, i);
+         put_block(dev, bmap, buf);
+         printf("allocated block number = %d\n", i + 1); // bits count from 0; ino from 1
+         return i + 1;
+      }
+   }
+   return 0;
+}
+
+int idalloc(int dev, int ino)
+{
+   int i;
+   char buf[BLKSIZE];
+
+   if (ino > ninodes)
+   {
+      printf("inumber %d out of range\n", ino);
+      return 1;
+   }
+
+   get_block(dev, imap, buf); // get inode bitmap block into buf[]
+
+   clr_bit(buf, ino - 1); // clear bit ino-1 to 0
+
+   put_block(dev, imap, buf); // write buf back
 }
 
 int idealLength(int len) { return 4 * ((8 + len + 3) / 4); }
 
 int decFreeInodes(int dev, char *buf)
 {
-    // dec free inodes count in SUPER and GD
-    get_block(dev, 1, buf);
-    sp = (SUPER *)buf;
-    sp->s_free_inodes_count--;
-    put_block(dev, 1, buf);
-    get_block(dev, 2, buf);
-    gp = (GD *)buf;
-    gp->bg_free_inodes_count--;
-    put_block(dev, 2, buf);
+   // dec free inodes count in SUPER and GD
+   get_block(dev, 1, buf);
+   sp = (SUPER *)buf;
+   sp->s_free_inodes_count--;
+   put_block(dev, 1, buf);
+   get_block(dev, 2, buf);
+   gp = (GD *)buf;
+   gp->bg_free_inodes_count--;
+   put_block(dev, 2, buf);
 }
 
 int get_block(int dev, int blk, char *buf)
@@ -281,6 +304,44 @@ int findparent(char *pathname)
       i++;
    }
    return 0;
+}
+
+int makePath(char *fileName, MINODE *currentMinode)
+{
+   if (pathname[0] == '/')
+   {
+      currentMinode = root;
+   }
+   else
+   {
+      currentMinode = running->cwd;
+   }
+
+   // get parentpath and basename
+   strcpy(fileName, pathname);
+   strcpy(pathname, dirname(pathname));
+   strcpy(fileName, basename(fileName));
+   printf("path: %s ", pathname);
+   printf("file: %s ", fileName);
+}
+
+int checkDir(MINODE *pmip, int ino, char *fileName)
+{
+   if (S_ISDIR(pmip->INODE.i_mode))
+   {
+      // check if basename already exists in parent minode
+      ino = search(pmip, fileName);
+      if (ino)
+      {
+         printf("file %s exists\n", fileName);
+         return 1;
+      }
+   }
+   else
+   {
+      printf("file %s is not a dir\n", pathname);
+      return 2;
+   }
 }
 
 // These 2 functions are needed for pwd()

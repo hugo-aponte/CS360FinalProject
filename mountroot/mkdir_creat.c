@@ -18,7 +18,7 @@ int enter_child(MINODE *pip, DIR *fPtr)
     //hard part
     // printf("inside enter_child\n");
 
-    // pip is our parent minode, fptr is our new directory 
+    // pip is our parent minode, fptr is our new directory
     // printf("Parent->ino=%d, new_dir ino=%d, new_name=%s\n", pip->ino, fPtr->inode, fPtr->name);
 
     char *cp;
@@ -26,7 +26,6 @@ int enter_child(MINODE *pip, DIR *fPtr)
     int remain;
     int ideal_length = idealLength(strlen(fPtr->name));
     DIR *dp, *newFile;
-
 
     for (int i = 0; i < 12; i++)
     {
@@ -43,16 +42,16 @@ int enter_child(MINODE *pip, DIR *fPtr)
         while (cp + dp->rec_len < buf + BLKSIZE)
         {
             // printf("inside for ~ inside while\n");
-            if(dp->rec_len == 0)
+            if (dp->rec_len == 0)
                 break;
 
             cp += dp->rec_len;
             dp = (DIR *)cp;
         }
 
-        // cp and dp should be ready to enter fptr        
+        // cp and dp should be ready to enter fptr
         // printf("last entry is %s\n", dp->name);
-        cp = (char*)dp;
+        cp = (char *)dp;
 
         // remaining bytes in current block;
         remain = dp->rec_len;
@@ -103,14 +102,14 @@ DIR kmkdir(MINODE *pmip, char *fileName)
     ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
     ip->i_blocks = 2;     // linux: blocks count in 512-byte chunks
     ip->i_block[0] = blk; // new DIR has one data block
-    
+
     for (int i = 1; i < 15; i++)
         ip->i_block[i] = 0; // setting all other blocks to 0
-    
-    mip->dirty = 1; // mark minode dirty
-    iput(mip); // write INODE to disk
 
-    bzero(buf, BLKSIZE); // optional: clear buf[ ] to 0
+    mip->dirty = 1; // mark minode dirty
+    iput(mip);      // write INODE to disk
+
+    bzero(buf, BLKSIZE);           // optional: clear buf[ ] to 0
     get_block(mip->dev, blk, buf); // initialize new allocated block
     DIR *dp = (DIR *)buf;
 
@@ -132,12 +131,12 @@ DIR kmkdir(MINODE *pmip, char *fileName)
     // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0], dp->name[1]);
 
     put_block(mip->dev, blk, buf); // write to blk on disk
-    
+
     // printf("past put_block ~ created new dir\n");
     dirPtr.inode = ino;
     strncpy(dirPtr.name, fileName, strlen(fileName));
     dirPtr.name_len = strlen(fileName);
-    dirPtr.rec_len = 4 * ((8 + dirPtr.name_len + 3) / 4);
+    dirPtr.rec_len = idealLength(dirPtr.name_len);
     // printf("new dir name: %s\n", dirPtr.name);
 
     enter_child(pmip, &dirPtr);
@@ -155,43 +154,17 @@ int myMkdir()
     char fileName[128];
     MINODE *currentMinode;
 
-    // check pathname for root or cwd
-    if (pathname[0] == '/')
-    {
-        currentMinode = root;
-    }
-    else
-    {
-        currentMinode = running->cwd;
-    }
-
-    // get parentpath and basename
-    strcpy(fileName, pathname);
-    strcpy(pathname, dirname(pathname));
-    strcpy(fileName, basename(fileName));
-    printf("path: %s ", pathname);
-    printf("file: %s ", fileName);
+    makePath(fileName, currentMinode);
 
     // get parent inode number
     int pino = getino(pathname);
-    
+
     // get parent minode with parent inode number
     MINODE *pmip = iget(dev, pino);
 
-    // check if parent minode is a directory
-    if (S_ISDIR(pmip->INODE.i_mode))
+    if (checkDir(pmip, pino, fileName))
     {
-        // check if basename already exists in parent minode 
-        ino = search(pmip, fileName);
-        if (ino)
-        {
-            printf("file %s already exists\n", fileName);
-            return -1;
-        }
-    }
-    else
-    {
-        printf("file %s is not a dir\n", pathname);
+        return 1;
     }
 
     // create the new directory in kmkdir
@@ -208,48 +181,24 @@ int myCreat()
     MINODE *currentMinode;
 
     // check pathname for root or cwd
-    if (pathname[0] == '/')
-    {
-        currentMinode = root;
-    }
-    else
-    {
-        currentMinode = running->cwd;
-    }
-
-    // get parentpath and basename
-    strcpy(fileName, pathname);
-    strcpy(pathname, dirname(pathname));
-    strcpy(fileName, basename(fileName));
-    printf("path: %s ", pathname);
-    printf("file: %s ", fileName);
+    makePath(fileName, currentMinode);
 
     // get parent inode number
     int pino = getino(pathname);
-    
+
     // get parent minode with parent inode number
     MINODE *pmip = iget(dev, pino);
 
     // check if parent minode is a directory
-    if (S_ISDIR(pmip->INODE.i_mode))
+    if (checkDir(pmip, pino, fileName))
     {
-        // check if basename already exists in parent minode 
-        ino = search(pmip, fileName);
-        if (ino)
-        {
-            printf("file %s already exists\n", fileName);
-            return -1;
-        }
-    }
-    else
-    {
-        printf("file %s is not a dir\n", pathname);
+        return 1;
     }
 
     // create the new file in kcreat
     kcreat(pmip, fileName);
 
-    return 0;   
+    return 0;
 }
 
 void kcreat(MINODE *pmip, char *filename)
@@ -265,7 +214,7 @@ void kcreat(MINODE *pmip, char *filename)
     INODE *ip = &mip->INODE;
 
     // write INODE into memory inode
-    ip->i_mode = 0x81A4; // File type and permissions
+    ip->i_mode = 0x81A4;      // File type and permissions
     ip->i_uid = running->uid; // user id
     ip->i_gid = running->gid; // group id
     ip->i_size = BLKSIZE;
@@ -275,7 +224,7 @@ void kcreat(MINODE *pmip, char *filename)
     ip->i_block[0] = blk;
     mip->refCount = 0;
 
-    for(int i = 1; i < 13; i++)
+    for (int i = 1; i < 15; i++)
     {
         ip->i_block[i] = 0; // set other inode blocks to 0
     }
@@ -290,7 +239,7 @@ void kcreat(MINODE *pmip, char *filename)
     newdir.name_len = strlen(filename);
     newdir.rec_len = idealLength(newdir.name_len);
 
-    // enter file entry into parent directory 
+    // enter file entry into parent directory
     enter_child(pmip, &newdir);
 
     pmip->INODE.i_atime = time(0L);

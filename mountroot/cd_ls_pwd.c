@@ -143,11 +143,14 @@ int ls_dir(MINODE *mip, int dev)
     int i, ino;
     MINODE *temp;
 
-    // check if direct block where our directories are is valid
-    if (mip->INODE.i_block[0])
+    //check all inode blocks, don't quite understand why, but rmdir example code does it.
+    for (int i = 0; i < 12; i++)
     {
+        // check if direct block where our directories are is valid
+        if (!mip->INODE.i_block[i])
+            break;
         // set block content to buf
-        get_block(dev, mip->INODE.i_block[0], buf);
+        get_block(dev, mip->INODE.i_block[i], buf);
         cp = buf;
         dp = (DIR *)buf;
 

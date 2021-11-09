@@ -143,7 +143,9 @@ int main(int argc, char *argv[])
       quit();
     else if (strcmp(cmd, "mkdir") == 0)
       myMkdir();
-    else if(strcmp(cmd, "creat") == 0)
+    else if (strcmp(cmd, "creat") == 0)
       myCreat();
+    else if (strcmp(cmd, "rmdir") == 0)
+      myRmdir();
   }
 }

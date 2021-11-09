@@ -89,6 +89,7 @@ int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
 int balloc(int dev);
 int ialloc(int dev); // allocate an inode number from inode_bitmap
+int idalloc(int dev, int ino);
 
 // cd_ls_pwd
 int cd();
@@ -105,6 +106,13 @@ DIR kmkdir(MINODE *pmip, char *fileName);
 int myMkdir();
 void kcreat(MINODE *pmip, char *filename);
 int myCreat();
+int makePath(char *fileName, MINODE *currentMinode);
+int checkDir(MINODE *pmip, int ino, char *fileName);
+
+//rmdir
+int myRmdir();
+int clr_bit(char *buf, int bit); // clear bit in char buf[BLKSIZE]
+int rm_child(MINODE *pip, char *fName, int ino, int pino);
 
 // misc
 int myStat(int dev, char *pathname);
