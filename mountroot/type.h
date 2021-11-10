@@ -118,6 +118,10 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino);
 int myLink();
 int mySymLink();
 
+// link_unlink
+int myLink();
+int mySymLink();
+
 // misc
 int myStat(int dev, char *pathname);
 int myChmod(int dev, char *pathname, u16 mode);

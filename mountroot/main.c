@@ -145,7 +145,6 @@ int main(int argc, char *argv[])
       myMkdir();
     else if (strcmp(cmd, "creat") == 0)
       myCreat();
-<<<<<<< HEAD
     else if(strcmp(cmd, "link") == 0)
     {
       sscanf(line, "%s %s %s", cmd, pathname, destination);
@@ -158,9 +157,7 @@ int main(int argc, char *argv[])
       printf("pathname=%s destination=%s\n", pathname, destination);
       mySymLink();
     }
-=======
     else if (strcmp(cmd, "rmdir") == 0)
       myRmdir();
->>>>>>> mkdir_creat
   }
 }
