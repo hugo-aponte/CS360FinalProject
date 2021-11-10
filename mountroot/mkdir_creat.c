@@ -12,7 +12,6 @@ extern int fd, dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
 extern char line[128], cmd[32], pathname[128];
 
-// ************ mkdir *****************
 int enter_child(MINODE *pip, DIR *fPtr)
 {
     //hard part
@@ -76,6 +75,12 @@ int enter_child(MINODE *pip, DIR *fPtr)
 
             put_block(pip->dev, pip->INODE.i_block[i], buf);
         }
+        else 
+        {
+            // for later use
+            if(pip->INODE.i_block[i+1] == 0)
+                return -1;
+        }
     }
 
     // printf("exiting enter_child\n");
@@ -83,71 +88,7 @@ int enter_child(MINODE *pip, DIR *fPtr)
     return 0;
 }
 
-DIR kmkdir(MINODE *pmip, char *fileName)
-{
-    // printf("Inside kmkdir\n");
-    char buf[BLKSIZE];
-    int ino = ialloc(dev);
-    int blk = balloc(dev);
-    DIR dirPtr;
-
-    MINODE *mip = iget(dev, ino);
-    INODE *ip = &mip->INODE;
-
-    ip->i_mode = 0x41ED;      // 040755: DIR type and permissions
-    ip->i_uid = running->uid; // owner uid
-    ip->i_gid = running->gid; // group Id
-    ip->i_size = BLKSIZE;     // size in bytes
-    ip->i_links_count = 2;    // links count=2 because of . and ..
-    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
-    ip->i_blocks = 2;     // linux: blocks count in 512-byte chunks
-    ip->i_block[0] = blk; // new DIR has one data block
-
-    for (int i = 1; i < 15; i++)
-        ip->i_block[i] = 0; // setting all other blocks to 0
-
-    mip->dirty = 1; // mark minode dirty
-    iput(mip);      // write INODE to disk
-
-    bzero(buf, BLKSIZE);           // optional: clear buf[ ] to 0
-    get_block(mip->dev, blk, buf); // initialize new allocated block
-    DIR *dp = (DIR *)buf;
-
-    // make . entry
-    dp->inode = ino;
-    dp->rec_len = 12;
-    dp->name_len = 1;
-    dp->name[0] = '.';
-    dp->file_type = (u8)EXT2_FT_DIR;
-    // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0]);
-
-    // make .. entry: pmip->ino=parent DIR ino, blk=allocated block
-    dp = (DIR *)((char *)dp + dp->rec_len);
-    dp->inode = pmip->ino;
-    dp->rec_len = BLKSIZE - 12; // rec_len spans block
-    dp->name_len = 2;
-    dp->name[0] = dp->name[1] = '.';
-    dp->file_type = (u8)EXT2_FT_DIR;
-    // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0], dp->name[1]);
-
-    put_block(mip->dev, blk, buf); // write to blk on disk
-
-    // printf("past put_block ~ created new dir\n");
-    dirPtr.inode = ino;
-    strncpy(dirPtr.name, fileName, strlen(fileName));
-    dirPtr.name_len = strlen(fileName);
-    dirPtr.rec_len = idealLength(dirPtr.name_len);
-    // printf("new dir name: %s\n", dirPtr.name);
-
-    enter_child(pmip, &dirPtr);
-    // printf("past enter_child");
-
-    pmip->INODE.i_atime = time(0L);
-    pmip->dirty = 1;
-    iput(pmip);
-    // printf("exiting kmkdir\n");
-}
-
+// ************ mkdir *****************
 int myMkdir()
 {
     int ino;
@@ -198,52 +139,5 @@ int myCreat()
     // create the new file in kcreat
     kcreat(pmip, fileName);
 
-    return 0;
-}
-
-void kcreat(MINODE *pmip, char *filename)
-{
-    printf("inside my_creat\n");
-    printf("pmip->ino=%d, filename=%s\n", pmip->ino, filename);
-
-    // get ino available and blk numbers
-    int ino = ialloc(dev);
-    int blk = balloc(dev);
-
-    MINODE *mip = iget(dev, ino);
-    INODE *ip = &mip->INODE;
-
-    // write INODE into memory inode
-    ip->i_mode = 0x81A4;      // File type and permissions
-    ip->i_uid = running->uid; // user id
-    ip->i_gid = running->gid; // group id
-    ip->i_size = BLKSIZE;
-    ip->i_links_count = 1;
-    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
-    ip->i_blocks = 2;
-    ip->i_block[0] = blk;
-    mip->refCount = 0;
-
-    for (int i = 1; i < 15; i++)
-    {
-        ip->i_block[i] = 0; // set other inode blocks to 0
-    }
-
-    mip->dirty = 1;
-    iput(mip);
-
-    // create new directory entry for new file
-    DIR newdir;
-    newdir.inode = ino;
-    strncpy(newdir.name, filename, strlen(filename));
-    newdir.name_len = strlen(filename);
-    newdir.rec_len = idealLength(newdir.name_len);
-
-    // enter file entry into parent directory
-    enter_child(pmip, &newdir);
-
-    pmip->INODE.i_atime = time(0L);
-    pmip->dirty = 1;
-
-    iput(pmip);
+    return 0;   
 }

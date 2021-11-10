@@ -306,42 +306,270 @@ int findparent(char *pathname)
    return 0;
 }
 
-int makePath(char *fileName, MINODE *currentMinode)
+int ls_file(MINODE *mip, char *name)
 {
-   if (pathname[0] == '/')
-   {
-      currentMinode = root;
-   }
-   else
-   {
-      currentMinode = running->cwd;
-   }
+   // set INODE parent to mip->INODE | this represents the parent directory
+   INODE *parentip = &mip->INODE;
+   u16 mode = parentip->i_mode;
 
-   // get parentpath and basename
-   strcpy(fileName, pathname);
-   strcpy(pathname, dirname(pathname));
-   strcpy(fileName, basename(fileName));
-   printf("path: %s ", pathname);
-   printf("file: %s ", fileName);
+   // track calendar time to include in file description
+   time_t calendarTime = parentip->i_ctime;
+   char *mtime = ctime(&calendarTime);
+   mtime[strlen(mtime) - 1] = '\0';
+
+   // extract file type
+   u16 type = mode & 0xF000;
+
+   // check if file type if a file or directory
+   if (type == 0x4000)
+      printf("d");
+   else if (type == 0x8000)
+      printf("-");
+   else if (type == 0xA000)
+      printf("l");
+   else
+      printf("-");
+
+   // check permissions associated with current file to print in file description
+   ((mode & S_IRUSR) == S_IRUSR) ? printf("r") : printf("-");
+   ((mode & S_IWUSR) == S_IWUSR) ? printf("w") : printf("-");
+   ((mode & S_IXUSR) == S_IXUSR) ? printf("x") : printf("-");
+   ((mode & S_IRGRP) == S_IRGRP) ? printf("r") : printf("-");
+   ((mode & S_IWGRP) == S_IWGRP) ? printf("w") : printf("-");
+   ((mode & S_IXGRP) == S_IXGRP) ? printf("x") : printf("-");
+   ((mode & S_IROTH) == S_IROTH) ? printf("r") : printf("-");
+   ((mode & S_IWOTH) == S_IWOTH) ? printf("w") : printf("-");
+   ((mode & S_IXOTH) == S_IXOTH) ? printf("x") : printf("-");
+
+   // print further current file descriptions
+   printf("%4d%4d%4d  %s%8d  %s", parentip->i_links_count, parentip->i_gid, parentip->i_uid, mtime, parentip->i_size, name);
+
+   // check for symlink file, and show the file if it exists
+   ((mode & 0120000) == 0120000) ? printf(" => %s\n", (char *)(mip->INODE.i_block)) : printf("\n");
 }
 
-int checkDir(MINODE *pmip, int ino, char *fileName)
+int ls_dir(MINODE *mip, int dev)
 {
-   if (S_ISDIR(pmip->INODE.i_mode))
+   char buf[BLKSIZE], name[256], *cp;
+   DIR *dp;
+   int i, ino;
+   MINODE *temp;
+
+   // check if direct block where our directories are is valid
+   if (mip->INODE.i_block[0])
    {
-      // check if basename already exists in parent minode
-      ino = search(pmip, fileName);
-      if (ino)
+      // set block content to buf
+      get_block(dev, mip->INODE.i_block[0], buf);
+      cp = buf;
+      dp = (DIR *)buf;
+
+      // traverse directories utilizing dp and cp
+      while (cp < &buf[BLKSIZE])
       {
-         printf("file %s exists\n", fileName);
-         return 1;
+         // handle directory name properly
+         strncpy(name, dp->name, dp->name_len);
+         name[dp->name_len] = 0;
+
+         // set inode number to that of the current directory
+         ino = dp->inode;
+
+         // set temp to MINODE from iget call using global dev and directory inode number
+         temp = iget(dev, ino);
+
+         // print file from ls_file using MINODE temp and directory name
+         ls_file(temp, name);
+
+         // advance to next record and set directory pointer to next directory
+         cp += dp->rec_len;
+         dp = (DIR *)cp;
+         iput(temp);
       }
    }
-   else
+}
+
+void rpwd(MINODE *wd)
+{
+   char buf[BLKSIZE], dirname[BLKSIZE];
+   int my_ino, parent_ino;
+
+   DIR *dp;
+   char *cp;
+
+   // parent minode
+   MINODE *parentMINODE;
+
+   if (wd == root)
+      return;
+
+   // get dir block of cwd
+   get_block(wd->dev, wd->INODE.i_block[0], buf);
+   dp = (DIR *)buf;
+   cp = buf;
+
+   // search through cwd for my_ino and parent ino
+   while (cp < buf + BLKSIZE)
    {
-      printf("file %s is not a dir\n", pathname);
-      return 2;
+      strcpy(dirname, dp->name);
+      dirname[dp->name_len] = '\0';
+
+      // check for "." dir
+      if (strcmp(dirname, ".") == 0)
+      {
+         my_ino = dp->inode;
+      }
+
+      // check for ".." dir
+      if (strcmp(dirname, "..") == 0)
+      {
+         parent_ino = dp->inode;
+      }
+
+      // advance to next record
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
    }
+
+   parentMINODE = iget(wd->dev, parent_ino);
+   get_block(wd->dev, parentMINODE->INODE.i_block[0], buf);
+   dp = (DIR *)buf;
+   cp = buf;
+
+   while (cp < buf + BLKSIZE)
+   {
+      strncpy(dirname, dp->name, dp->name_len);
+      dirname[dp->name_len] = 0;
+
+      // check if we found directory associated with my_ino
+      if (dp->inode == my_ino)
+      {
+         break;
+      }
+
+      // advance to next record
+      cp += dp->rec_len;
+      dp = (DIR *)cp;
+   }
+   rpwd(parentMINODE);
+   iput(parentMINODE);
+
+   printf("/%s", dirname);
+   return;
+}
+
+
+int kcreat(MINODE *pmip, char *filename)
+{
+   printf("inside my_creat\n");
+   printf("pmip->ino=%d, filename=%s\n", pmip->ino, filename);
+
+   // get ino available and blk numbers
+   int ino = ialloc(dev);
+   int blk = balloc(dev);
+
+   MINODE *mip = iget(dev, ino);
+   INODE *ip = &mip->INODE;
+
+   // write INODE into memory inode
+   ip->i_mode = 0x81A4; // File type and permissions
+   ip->i_uid = running->uid; // user id
+   ip->i_gid = running->gid; // group id
+   ip->i_size = 0;
+   ip->i_links_count = 1;
+   ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
+   ip->i_blocks = 2;
+   ip->i_block[0] = blk;
+   mip->refCount = 0;
+
+   for(int i = 1; i < 13; i++)
+   {
+      ip->i_block[i] = 0; // set other inode blocks to 0
+   }
+
+   mip->dirty = 1;
+   iput(mip);
+
+   // create new directory entry for new file
+   DIR newdir;
+   newdir.inode = ino;
+   strncpy(newdir.name, filename, strlen(filename));
+   newdir.name_len = strlen(filename);
+   newdir.rec_len = idealLength(newdir.name_len);
+
+   // enter file entry into parent directory 
+   enter_child(pmip, &newdir);
+
+   pmip->INODE.i_atime = time(0L);
+   pmip->dirty = 1;
+
+   iput(pmip);
+
+   // when this function is used by symlink, it will expect the inode number to be returned
+   return ino;
+}
+
+DIR kmkdir(MINODE *pmip, char *fileName)
+{
+    // printf("Inside kmkdir\n");
+    char buf[BLKSIZE];
+    int ino = ialloc(dev);
+    int blk = balloc(dev);
+    DIR dirPtr;
+
+    MINODE *mip = iget(dev, ino);
+    INODE *ip = &mip->INODE;
+
+    ip->i_mode = 0x41ED;      // 040755: DIR type and permissions
+    ip->i_uid = running->uid; // owner uid
+    ip->i_gid = running->gid; // group Id
+    ip->i_size = BLKSIZE;     // size in bytes
+    ip->i_links_count = 2;    // links count=2 because of . and ..
+    ip->i_atime = ip->i_ctime = ip->i_mtime = time(0L);
+    ip->i_blocks = 2;     // linux: blocks count in 512-byte chunks
+    ip->i_block[0] = blk; // new DIR has one data block
+    
+    for (int i = 1; i < 15; i++)
+        ip->i_block[i] = 0; // setting all other blocks to 0
+    
+    mip->dirty = 1; // mark minode dirty
+    iput(mip); // write INODE to disk
+
+    bzero(buf, BLKSIZE); // optional: clear buf[ ] to 0
+    get_block(mip->dev, blk, buf); // initialize new allocated block
+    DIR *dp = (DIR *)buf;
+
+    // make . entry
+    dp->inode = ino;
+    dp->rec_len = 12;
+    dp->name_len = 1;
+    dp->name[0] = '.';
+    dp->file_type = (u8)EXT2_FT_DIR;
+    // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0]);
+
+    // make .. entry: pmip->ino=parent DIR ino, blk=allocated block
+    dp = (DIR *)((char *)dp + dp->rec_len);
+    dp->inode = pmip->ino;
+    dp->rec_len = BLKSIZE - 12; // rec_len spans block
+    dp->name_len = 2;
+    dp->name[0] = dp->name[1] = '.';
+    dp->file_type = (u8)EXT2_FT_DIR;
+    // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0], dp->name[1]);
+
+    put_block(mip->dev, blk, buf); // write to blk on disk
+    
+    // printf("past put_block ~ created new dir\n");
+    dirPtr.inode = ino;
+    strncpy(dirPtr.name, fileName, strlen(fileName));
+    dirPtr.name_len = strlen(fileName);
+    dirPtr.rec_len = 4 * ((8 + dirPtr.name_len + 3) / 4);
+    // printf("new dir name: %s\n", dirPtr.name);
+
+    enter_child(pmip, &dirPtr);
+    // printf("past enter_child");
+
+    pmip->INODE.i_atime = time(0L);
+    pmip->dirty = 1;
+    iput(pmip);
+    // printf("exiting kmkdir\n");
 }
 
 // These 2 functions are needed for pwd()

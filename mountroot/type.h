@@ -104,7 +104,7 @@ int quit();
 int enter_child(MINODE *pip, DIR *fPtr);
 DIR kmkdir(MINODE *pmip, char *fileName);
 int myMkdir();
-void kcreat(MINODE *pmip, char *filename);
+int kcreat(MINODE *pmip, char *filename);
 int myCreat();
 int makePath(char *fileName, MINODE *currentMinode);
 int checkDir(MINODE *pmip, int ino, char *fileName);
@@ -113,6 +113,10 @@ int checkDir(MINODE *pmip, int ino, char *fileName);
 int myRmdir();
 int clr_bit(char *buf, int bit); // clear bit in char buf[BLKSIZE]
 int rm_child(MINODE *pip, char *fName, int ino, int pino);
+
+// link_unlink
+int myLink();
+int mySymLink();
 
 // misc
 int myStat(int dev, char *pathname);
