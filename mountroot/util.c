@@ -572,6 +572,44 @@ DIR kmkdir(MINODE *pmip, char *fileName)
     // printf("exiting kmkdir\n");
 }
 
+int makePath(char *fileName, MINODE *currentMinode)
+{
+   if (pathname[0] == '/')
+   {
+      currentMinode = root;
+   }
+   else
+   {
+      currentMinode = running->cwd;
+   }
+
+   // get parentpath and basename
+   strcpy(fileName, pathname);
+   strcpy(pathname, dirname(pathname));
+   strcpy(fileName, basename(fileName));
+   printf("path: %s ", pathname);
+   printf("file: %s ", fileName);
+}
+
+int checkDir(MINODE *pmip, int ino, char *fileName)
+{
+   if (S_ISDIR(pmip->INODE.i_mode))
+   {
+      // check if basename already exists in parent minode
+      ino = search(pmip, fileName);
+      if (ino)
+      {
+         printf("file %s exists\n", fileName);
+         return 1;
+      }
+   }
+   else
+   {
+      printf("file %s is not a dir\n", pathname);
+      return 2;
+   }
+}
+
 // These 2 functions are needed for pwd()
 int findmyname(MINODE *parent, u32 myino, char myname[])
 {
