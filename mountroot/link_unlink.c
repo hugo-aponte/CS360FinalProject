@@ -123,3 +123,73 @@ int myLink()
 
 // ************ unlink *****************
 
+int myUnlink()
+{
+    // used for inode numbers of given filename and parent directory 
+    int ino, pino;
+
+    // used to access link file and parent directory using their corresponding inode numbers
+    MINODE *mip, *pmip;
+
+    // used to access parent directory 
+    char parent[64], child[64];
+
+    // check if pathname is populated
+    if(pathname[0] == 0)
+    {
+        printf("unlink: no filename entered\n");
+        return -1;
+    }
+
+    // get inode number of given filename
+    ino = getino(pathname);
+
+    // get MINODE associated with inode number
+    mip = iget(dev, ino);
+
+    // check if the pathname was valid
+    if(!mip)
+    {
+        printf("unlink: file not found\n");
+        return -1;
+    }
+
+    // check if INODE type is DIR
+    if(S_ISDIR(mip->INODE.i_mode))
+    {
+        printf("unlink: cannot unlink directory\n");
+        return -1;
+    }
+
+    // get inode number of parent directory
+    strcpy(parent, pathname);
+    strcpy(child, pathname);
+    strcpy(parent, dirname(parent));
+    strcpy(child, basename(child));
+
+    pino = getino(parent);
+    pmip = iget(dev, pino);
+    
+    // remove given file from parent directory
+    rm_child(pmip, child, ino, pino);
+    pmip->dirty = 1;
+    iput(pmip);
+
+    // decrement INODE's link count by 1
+    mip->INODE.i_links_count--;
+
+    // check if links count is still greater 0
+    if(mip->INODE.i_links_count > 0)
+    {
+        mip->dirty = 1;
+    }
+    else
+    {
+        // in the case where links count == 0, remove filename
+        idalloc(dev, ino);
+    }
+
+    return 0;
+
+}
+

@@ -42,17 +42,16 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino)
             name[dp->name_len] = 0;
             // set inode number to that of the current directory
 
-            printf("compairing %s to %s", name, fName);
+            printf("compairing %s to %s\n", name, fName);
             if (!strcmp(name, fName))
             {
                 idalloc(dev, ino);
-                printf("removing name");
+                printf("removing name\n");
                 if (cp + dp->rec_len >= &buf[BLKSIZE])
                 {
                     prevDp->rec_len += dp->rec_len;
                     break;
                 }
-
                 else
                 {
                     middle = 1;
@@ -109,6 +108,23 @@ int myRmdir()
     MINODE *currentMinode;
     makePath(fileName, currentMinode);
 
+    // check if pathname is not ., .., nor /
+    if(strcmp(pathname, ".") == 0)
+    {
+        printf("rmdir: cannot remove . directory\n");
+        return -1;
+    }
+    if(strcmp(pathname, "..") == 0)
+    {
+        printf("rmdir: cannot remove .. directory\n");
+        return -1;
+    }
+    if(strcmp(pathname, "/") == 0)
+    {
+        printf("rmdir: cannot remove / directory\n");
+        return -1;
+    }
+
     // get parent inode number
     int pino = getino(pathname);
     MINODE *pip = iget(dev, pino);
@@ -116,21 +132,28 @@ int myRmdir()
     // get parent minode with parent inode number
     MINODE *mip = iget(dev, ino);
 
+    // check for valid parent MINODE
+    if(!pip)
+    {
+        printf("rmdir: parent directory not found\n");
+        return -1;
+    }
+
+    // find filename in parent directory
     if (checkDir(pip, pino, fileName) != 1)
     {
-        printf("file not found");
-        return 1;
+        printf("rmdir: file not found\n");
+        return -1;
     }
 
     if (mip->refCount > 1)
     {
-        printf("node in use, cannot rmdir");
-        return 1;
+        printf("rmdir: node in use, cannot rmdir\n");
+        return -1;
     }
     if (mip->INODE.i_blocks > 2)
-        return 1;
+        return -1;
 
-    //
 
     char buf[BLKSIZE], name[256], *cp;
     DIR *dp;
@@ -142,8 +165,8 @@ int myRmdir()
         // check if direct block where our directories are is valid
         if (mip->INODE.i_block[i])
         {
-            printf("cannot rmdir, dir not empty\n");
-            return 1;
+            printf("rmdir: cannot rmdir, dir not empty\n");
+            return -1;
         }
 
         // set block content to buf

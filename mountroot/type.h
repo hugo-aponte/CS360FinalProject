@@ -117,6 +117,7 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino);
 // link_unlink
 int myLink();
 int mySymLink();
+int myUnlink();
 
 // link_unlink
 int myLink();
