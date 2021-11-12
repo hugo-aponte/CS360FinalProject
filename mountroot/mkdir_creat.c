@@ -40,6 +40,7 @@ int enter_child(MINODE *pip, DIR *fPtr)
         // find last directory entry
         while (cp + dp->rec_len < buf + BLKSIZE)
         {
+        https: //github.com/hugo-aponte/CS360FinalProject.git
             // printf("inside for ~ inside while\n");
             if (dp->rec_len == 0)
                 break;
@@ -75,10 +76,10 @@ int enter_child(MINODE *pip, DIR *fPtr)
 
             put_block(pip->dev, pip->INODE.i_block[i], buf);
         }
-        else 
+        else
         {
             // for later use
-            if(pip->INODE.i_block[i+1] == 0)
+            if (pip->INODE.i_block[i + 1] == 0)
                 return -1;
         }
     }
@@ -139,5 +140,5 @@ int myCreat()
     // create the new file in kcreat
     kcreat(pmip, fileName);
 
-    return 0;   
+    return 0;
 }

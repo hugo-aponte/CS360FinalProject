@@ -69,6 +69,15 @@ int rm_child(MINODE *pip, char *fName, int ino)
                 continue;
             }
 
+            strncpy(name, dp->name, dp->name_len);
+            name[dp->name_len] = 0;
+
+            if (!strcmp(name, fName))
+            {
+                prevDp->rec_len += dp->rec_len;
+                break;
+            }
+
             ino = dp->inode;
 
             prevCp = cp;
@@ -79,15 +88,7 @@ int rm_child(MINODE *pip, char *fName, int ino)
             dp = (DIR *)cp;
         }
 
-        strncpy(name, dp->name, dp->name_len);
-        name[dp->name_len] = 0;
-
-        if (!strcmp(name, fName))
-        {
-            prevDp->rec_len += dp->rec_len;
-        }
-
-        printf("pre add dp->name = %s\n", dp->name);
+        // printf("pre add dp->rec_len = %d\n", dp->rec_len);
         dp->rec_len += removedSize;
         // printf("final dp->rec_len = %d\n", dp->rec_len);
 
@@ -168,38 +169,41 @@ int myRmdir()
     MINODE *temp;
 
     //check all inode blocks, don't quite understand why, but rmdir example code does it.
-    for (int i = 0; i < 12; i++)
+    for (int i = 2; i < 12; i++)
     {
         // check if direct block where our directories are is valid
-        if (!mip->INODE.i_block[i])
-            break;
+        if (mip->INODE.i_block[i])
+        {
+            printf("rmdir: cannot rmdir, dir not empty\n");
+            return -1;
+        }
 
         // set block content to buf
         get_block(dev, mip->INODE.i_block[i], buf);
         cp = buf;
         dp = (DIR *)buf;
 
-        // directories utilizing dp and cp
-        while (cp < &buf[BLKSIZE])
-        {
-            // handle directory name properly
-            strncpy(name, dp->name, dp->name_len);
-            name[dp->name_len] = 0;
+        // traverse directories utilizing dp and cp
+        // while (cp < &buf[BLKSIZE])
+        // {
+        //     // handle directory name properly
+        //     strncpy(name, dp->name, dp->name_len);
+        //     name[dp->name_len] = 0;
 
-            // set inode number to that of the current directory
-            ino = dp->inode;
+        //     // set inode number to that of the current directory
+        //     ino = dp->inode;
 
-            if (name[0] != 0 && strcmp(name, ".") && strcmp(name, ".."))
-            {
-                printf("cannot rmdir, %s not empty\n", fileName);
-                printf("%s contains %s and posibly more\n", fileName, name);
-                return 1;
-            }
+        //     if (name[0] != 0)
+        //     {
+        //         printf("cannot rmdir, dir not empty\n");
+        //         return 1;
+        //     }
 
-            // advance to next record and set directory pointer to next directory
-            cp += dp->rec_len;
-            dp = (DIR *)cp;
-        }
+        //     // advance to next record and set directory pointer to next directory
+        //     cp += dp->rec_len;
+        //     dp = (DIR *)cp;
+        //     iput(temp);
+        // }
     }
 
     //dir is now confirmed not to be empty, and rmdir can begin
