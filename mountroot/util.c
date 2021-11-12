@@ -410,6 +410,7 @@ int ls_dir(MINODE *mip, int dev)
 
          // print file from ls_file using MINODE temp and directory name
          ls_file(temp, name);
+         printf("rec_len = %d\n", dp->rec_len);
 
          // advance to next record and set directory pointer to next directory
          cp += dp->rec_len;

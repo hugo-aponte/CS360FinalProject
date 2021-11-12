@@ -1,3 +1,5 @@
-sudo mount disk /mnt
+sudo mount disk /mnt/
+mkdir /mnt/d1
+mkdir /mnt/d2
 ls -a -i -l /mnt       # show . and .., inode number, long format
 sudo umount /mnt

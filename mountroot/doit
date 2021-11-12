@@ -1,3 +1,4 @@
 sudo mke2fs -b 1024 disk 1440  # renew the disk image file
 sudo ./mk
+sudo ./s
 sudo ./a.out
