@@ -36,12 +36,12 @@ int myLink()
     char newFileParentPath[64], newFileChildPath[64];
 
     // check if global pathname and destination variables fit requirements (populated)
-    if(pathname[0] == 0)
+    if (pathname[0] == 0)
     {
         printf("link: no source file\n");
         return -1;
     }
-    if(destination[0] == 0)
+    if (destination[0] == 0)
     {
         printf("link: no destination file\n");
         return -1;
@@ -55,17 +55,17 @@ int myLink()
     omip = iget(dev, oino);
 
     // check if new file already exists
-    if(getino(newfile))
+    if (getino(newfile))
     {
         printf("link: destination file already exists\n");
         return -1;
     }
-    if(!omip)
+    if (!omip)
     {
         printf("link: source file does not exist\n");
         return -1;
     }
-    if(S_ISDIR(omip->INODE.i_mode))
+    if (S_ISDIR(omip->INODE.i_mode))
     {
         printf("link: source file is a directory\n");
         return -1;
@@ -73,7 +73,7 @@ int myLink()
 
     // check if destination path starts from root
     // if not set newFileParentPath to the dirname of newfile using buf as an intermediate so we dont lose data
-    if(strcmp(newfile, "/") == 0)
+    if (strcmp(newfile, "/") == 0)
     {
         strcpy(newFileParentPath, "/");
     }
@@ -93,12 +93,12 @@ int myLink()
     npino = getino(newFileParentPath);
     npmip = iget(dev, npino);
 
-    if(!npmip)
+    if (!npmip)
     {
         printf("link: parent of destination file was not found\n");
         return -1;
     }
-    if(!S_ISDIR(npmip->INODE.i_mode))
+    if (!S_ISDIR(npmip->INODE.i_mode))
     {
         printf("link: parent of destination file is not a directory");
         return -1;
@@ -125,17 +125,17 @@ int myLink()
 
 int myUnlink()
 {
-    // used for inode numbers of given filename and parent directory 
+    // used for inode numbers of given filename and parent directory
     int ino, pino;
 
     // used to access link file and parent directory using their corresponding inode numbers
     MINODE *mip, *pmip;
 
-    // used to access parent directory 
+    // used to access parent directory
     char parent[64], child[64];
 
     // check if pathname is populated
-    if(pathname[0] == 0)
+    if (pathname[0] == 0)
     {
         printf("unlink: no filename entered\n");
         return -1;
@@ -148,14 +148,14 @@ int myUnlink()
     mip = iget(dev, ino);
 
     // check if the pathname was valid
-    if(!mip)
+    if (!mip)
     {
         printf("unlink: file not found\n");
         return -1;
     }
 
     // check if INODE type is DIR
-    if(S_ISDIR(mip->INODE.i_mode))
+    if (S_ISDIR(mip->INODE.i_mode))
     {
         printf("unlink: cannot unlink directory\n");
         return -1;
@@ -169,9 +169,9 @@ int myUnlink()
 
     pino = getino(parent);
     pmip = iget(dev, pino);
-    
+
     // remove given file from parent directory
-    rm_child(pmip, child, ino, pino);
+    rm_child(pmip, child, ino);
     pmip->dirty = 1;
     iput(pmip);
 
@@ -179,7 +179,7 @@ int myUnlink()
     mip->INODE.i_links_count--;
 
     // check if links count is still greater 0
-    if(mip->INODE.i_links_count > 0)
+    if (mip->INODE.i_links_count > 0)
     {
         mip->dirty = 1;
     }
@@ -190,6 +190,4 @@ int myUnlink()
     }
 
     return 0;
-
 }
-

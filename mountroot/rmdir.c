@@ -11,7 +11,7 @@ extern int fd, dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
 extern char line[128], cmd[32], pathname[128];
 
-int rm_child(MINODE *pip, char *fName, int ino, int pino)
+int rm_child(MINODE *pip, char *fName, int ino)
 {
     char buf[BLKSIZE], name[256], *cp;
     char modBuf[BLKSIZE];
@@ -21,17 +21,16 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino)
     char nextName[256];
     DIR *prevDp;
     DIR *dp;
-    MINODE *mip = iget(dev, pino);
 
     //check all inode blocks, don't quite understand why, but rmdir example code does it.
     for (int i = 0; i < 12; i++)
     {
         // check if direct block where our directories are is valid
-        if (!mip->INODE.i_block[i])
+        if (!pip->INODE.i_block[i])
             break;
 
         printf("iblock %d is valid\n", i);
-        get_block(dev, mip->INODE.i_block[i], buf);
+        get_block(dev, pip->INODE.i_block[i], buf);
         cp = buf;
         dp = (DIR *)buf;
 
@@ -45,7 +44,9 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino)
             printf("compairing %s to %s\n", name, fName);
             if (!strcmp(name, fName))
             {
-                idalloc(dev, ino);
+                // bdalloc(dev, pip->INODE.i_block[i]);
+                // incFreeInodes(dev);
+
                 printf("removing name\n");
                 if (cp + dp->rec_len >= &buf[BLKSIZE])
                 {
@@ -61,6 +62,7 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino)
 
                     //memcpy(&buf[cp - buf], &buf[cp + dp->rec_len - buf], &buf[BLKSIZE] - cp + dp->rec_len);
                     removedSize = dp->rec_len;
+                    break;
                 }
                 //printf("finnished coppying mod to buf");
             }
@@ -81,8 +83,7 @@ int rm_child(MINODE *pip, char *fName, int ino, int pino)
             dp->rec_len += removedSize;
         }
 
-        put_block(dev, mip->INODE.i_block[i], buf);
-        iput(mip);
+        put_block(dev, pip->INODE.i_block[i], buf);
 
         // traverse directories utilizing dp and cp
         // while (cp < &buf[BLKSIZE])
@@ -109,17 +110,17 @@ int myRmdir()
     makePath(fileName, currentMinode);
 
     // check if pathname is not ., .., nor /
-    if(strcmp(pathname, ".") == 0)
+    if (strcmp(fileName, ".") == 0)
     {
         printf("rmdir: cannot remove . directory\n");
         return -1;
     }
-    if(strcmp(pathname, "..") == 0)
+    if (strcmp(fileName, "..") == 0)
     {
         printf("rmdir: cannot remove .. directory\n");
         return -1;
     }
-    if(strcmp(pathname, "/") == 0)
+    if (strcmp(fileName, "/") == 0)
     {
         printf("rmdir: cannot remove / directory\n");
         return -1;
@@ -133,7 +134,7 @@ int myRmdir()
     MINODE *mip = iget(dev, ino);
 
     // check for valid parent MINODE
-    if(!pip)
+    if (!pip)
     {
         printf("rmdir: parent directory not found\n");
         return -1;
@@ -153,7 +154,6 @@ int myRmdir()
     }
     if (mip->INODE.i_blocks > 2)
         return -1;
-
 
     char buf[BLKSIZE], name[256], *cp;
     DIR *dp;
@@ -199,7 +199,8 @@ int myRmdir()
 
     //dir is now confirmed not to be empty, and rmdir can begin
     printf("trying to rm child\n");
-    rm_child(pip, fileName, ino, pino);
+    idalloc(dev, ino);
+    rm_child(pip, fileName, ino);
     pip->INODE.i_links_count--; // We just lost ".." from the deleted child
     pip->INODE.i_mtime = time(0L);
     pip->INODE.i_atime = pip->INODE.i_mtime;

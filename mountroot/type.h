@@ -85,11 +85,13 @@ int iput(MINODE *mip);
 int findparent(char *pathname);
 int idealLength(int len);
 int decFreeInodes(int dev, char *buf);
+int incFreeInodes(int dev);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);
 int balloc(int dev);
 int ialloc(int dev); // allocate an inode number from inode_bitmap
 int idalloc(int dev, int ino);
+int bdalloc(int dev, int blk);
 
 // cd_ls_pwd
 int cd();
@@ -112,7 +114,7 @@ int checkDir(MINODE *pmip, int ino, char *fileName);
 //rmdir
 int myRmdir();
 int clr_bit(char *buf, int bit); // clear bit in char buf[BLKSIZE]
-int rm_child(MINODE *pip, char *fName, int ino, int pino);
+int rm_child(MINODE *pip, char *fName, int ino);
 
 // link_unlink
 int myLink();
