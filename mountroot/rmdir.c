@@ -49,31 +49,24 @@ int rm_child(MINODE *pip, char *fName, int ino)
                 // incFreeInodes(dev);
 
                 printf("removing %s\n", name);
-                if (cp + dp->rec_len >= &buf[BLKSIZE])
-                {
-                    prevDp->rec_len += dp->rec_len;
-                    break;
-                }
-                else
-                {
-                    printf("coppying buf to mod\n");
-                    middle = 1;
-                    int leftIndex = cp - buf;
-                    removedSize = dp->rec_len;
 
-                    memcpy(modBuf, buf, leftIndex);
-                    memcpy(&modBuf[leftIndex], &buf[leftIndex + dp->rec_len], (&buf[BLKSIZE] - buf) - (leftIndex + dp->rec_len)); // insane adress reading
-                    memcpy(buf, modBuf, BLKSIZE);
-                    //memcpy(&buf[cp - buf], &buf[cp + dp->rec_len - buf], &buf[BLKSIZE] - cp + dp->rec_len);
+                printf("coppying buf to mod\n");
+                middle = 1;
+                int leftIndex = cp - buf;
+                removedSize = dp->rec_len;
 
-                    // printf("origional size %llu\n", (long long int)size);
-                    size -= removedSize;
-                    // printf("removed size %d\n", removedSize);
-                    // printf("new size %llu\n", (long long int)size);
-                    dp = (DIR *)cp;
+                memcpy(modBuf, buf, leftIndex);
+                memcpy(&modBuf[leftIndex], &buf[leftIndex + dp->rec_len], (&buf[BLKSIZE] - buf) - (leftIndex + dp->rec_len)); // insane adress reading
+                memcpy(buf, modBuf, BLKSIZE);
+                //memcpy(&buf[cp - buf], &buf[cp + dp->rec_len - buf], &buf[BLKSIZE] - cp + dp->rec_len);
 
-                    continue;
-                }
+                // printf("origional size %llu\n", (long long int)size);
+                size -= removedSize;
+                // printf("removed size %d\n", removedSize);
+                // printf("new size %llu\n", (long long int)size);
+                dp = (DIR *)cp;
+
+                continue;
             }
 
             ino = dp->inode;
@@ -86,7 +79,16 @@ int rm_child(MINODE *pip, char *fName, int ino)
             dp = (DIR *)cp;
         }
 
-        // printf("pre add dp->rec_len = %d\n", dp->rec_len);
+        strncpy(name, dp->name, dp->name_len);
+        name[dp->name_len] = 0;
+
+        if (!strcmp(name, fName))
+        {
+            printf("hello");
+            prevDp->rec_len += dp->rec_len;
+        }
+
+        printf("pre add dp->name = %s\n", dp->name);
         dp->rec_len += removedSize;
         // printf("final dp->rec_len = %d\n", dp->rec_len);
 
