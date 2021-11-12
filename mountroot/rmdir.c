@@ -66,10 +66,10 @@ int rm_child(MINODE *pip, char *fName, int ino)
                     memcpy(buf, modBuf, BLKSIZE);
                     //memcpy(&buf[cp - buf], &buf[cp + dp->rec_len - buf], &buf[BLKSIZE] - cp + dp->rec_len);
 
-                    printf("origional size %llu\n", (long long int)size);
+                    // printf("origional size %llu\n", (long long int)size);
                     size -= removedSize;
-                    printf("removed size %d\n", removedSize);
-                    printf("new size %llu\n", (long long int)size);
+                    // printf("removed size %d\n", removedSize);
+                    // printf("new size %llu\n", (long long int)size);
                     dp = (DIR *)cp;
 
                     continue;
@@ -86,9 +86,9 @@ int rm_child(MINODE *pip, char *fName, int ino)
             dp = (DIR *)cp;
         }
 
-        printf("pre add dp->rec_len = %d\n", dp->rec_len);
+        // printf("pre add dp->rec_len = %d\n", dp->rec_len);
         dp->rec_len += removedSize;
-        printf("final dp->rec_len = %d\n", dp->rec_len);
+        // printf("final dp->rec_len = %d\n", dp->rec_len);
 
         put_block(dev, pip->INODE.i_block[i], buf);
 
