@@ -69,15 +69,6 @@ int rm_child(MINODE *pip, char *fName, int ino)
                 continue;
             }
 
-            strncpy(name, dp->name, dp->name_len);
-            name[dp->name_len] = 0;
-
-            if (!strcmp(name, fName))
-            {
-                prevDp->rec_len += dp->rec_len;
-                break;
-            }
-
             ino = dp->inode;
 
             prevCp = cp;
@@ -86,6 +77,14 @@ int rm_child(MINODE *pip, char *fName, int ino)
             // advance to next record and set directory pointer to next directory
             cp += dp->rec_len;
             dp = (DIR *)cp;
+        }
+
+        strncpy(name, dp->name, dp->name_len);
+        name[dp->name_len] = 0;
+
+        if (!strcmp(name, fName))
+        {
+            prevDp->rec_len += dp->rec_len;
         }
 
         // printf("pre add dp->rec_len = %d\n", dp->rec_len);
