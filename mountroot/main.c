@@ -145,23 +145,23 @@ int main(int argc, char *argv[])
       myMkdir();
     else if (strcmp(cmd, "creat") == 0)
       myCreat();
-    else if(strcmp(cmd, "link") == 0)
+    else if (strcmp(cmd, "link") == 0)
     {
       sscanf(line, "%s %s %s", cmd, pathname, destination);
       printf("pathname=%s destination=%s\n", pathname, destination);
       myLink();
     }
-    else if(strcmp(cmd, "symlink") == 0)
+    else if (strcmp(cmd, "symlink") == 0)
     {
       sscanf(line, "%s %s %s", cmd, pathname, destination);
       printf("pathname=%s destination=%s\n", pathname, destination);
       mySymLink();
     }
-    else if(strcmp(cmd, "unlink") == 0)
+    else if (strcmp(cmd, "unlink") == 0)
     {
       myUnlink();
     }
     else if (strcmp(cmd, "rmdir") == 0)
-      myRmdir();
+      printf("%d", myRmdir());
   }
 }

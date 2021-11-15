@@ -1,5 +1,10 @@
+#!/bin/bash  
 sudo mount disk /mnt/
-mkdir /mnt/d1
-mkdir /mnt/d2
+
+for i in {1..100}
+do
+mkdir /mnt/d$i
+done
+
 ls -a -i -l /mnt       # show . and .., inode number, long format
 sudo umount /mnt

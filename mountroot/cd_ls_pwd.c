@@ -68,10 +68,10 @@ int ls()
         ino = getino(pathname);
 
         // check if getino worked
-        if (ino == -1 || ino == 0)
-        {
-            return 1;
-        }
+        // if (ino == -1 || ino == 0)
+        // {
+        //     return 1;
+        // }
 
         // if ino worked, set MINODE mip to iget call for global dev and extracted inode number
         mip = iget(dev, ino);
