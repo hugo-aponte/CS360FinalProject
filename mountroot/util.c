@@ -387,35 +387,39 @@ int ls_dir(MINODE *mip, int dev)
    int i, ino;
    MINODE *temp;
 
-   // check if direct block where our directories are is valid
-   if (mip->INODE.i_block[0])
+   for (int i = 0; i < 12; i++)
    {
-      // set block content to buf
-      get_block(dev, mip->INODE.i_block[0], buf);
-      cp = buf;
-      dp = (DIR *)buf;
-
-      // traverse directories utilizing dp and cp
-      while (cp < &buf[BLKSIZE])
+      printf("iblock: %d\n", i);
+      // check if direct block where our directories are is valid
+      if (mip->INODE.i_block[i])
       {
-         // handle directory name properly
-         strncpy(name, dp->name, dp->name_len);
-         name[dp->name_len] = 0;
+         // set block content to buf
+         get_block(dev, mip->INODE.i_block[i], buf);
+         cp = buf;
+         dp = (DIR *)buf;
 
-         // set inode number to that of the current directory
-         ino = dp->inode;
+         // traverse directories utilizing dp and cp
+         while (cp < &buf[BLKSIZE])
+         {
+            // handle directory name properly
+            strncpy(name, dp->name, dp->name_len);
+            name[dp->name_len] = 0;
 
-         // set temp to MINODE from iget call using global dev and directory inode number
-         temp = iget(dev, ino);
+            // set inode number to that of the current directory
+            ino = dp->inode;
 
-         // print file from ls_file using MINODE temp and directory name
-         ls_file(temp, name);
-         // printf("rec_len = %d\n", dp->rec_len);
+            // set temp to MINODE from iget call using global dev and directory inode number
+            temp = iget(dev, ino);
 
-         // advance to next record and set directory pointer to next directory
-         cp += dp->rec_len;
-         dp = (DIR *)cp;
-         iput(temp);
+            // print file from ls_file using MINODE temp and directory name
+            ls_file(temp, name);
+            // printf("rec_len = %d\n", dp->rec_len);
+
+            // advance to next record and set directory pointer to next directory
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+            iput(temp);
+         }
       }
    }
 }

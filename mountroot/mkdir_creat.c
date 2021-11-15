@@ -23,7 +23,6 @@ int enter_child(MINODE *pip, DIR *fPtr)
     char *cp;
     char buf[BLKSIZE];
     int remain;
-    int ideal_length = idealLength(strlen(fPtr->name));
     DIR *dp, *newFile;
 
     for (int i = 0; i < 12; i++)
@@ -40,7 +39,6 @@ int enter_child(MINODE *pip, DIR *fPtr)
         // find last directory entry
         while (cp + dp->rec_len < buf + BLKSIZE)
         {
-        https: //github.com/hugo-aponte/CS360FinalProject.git
             // printf("inside for ~ inside while\n");
             if (dp->rec_len == 0)
                 break;
@@ -57,7 +55,7 @@ int enter_child(MINODE *pip, DIR *fPtr)
         remain = dp->rec_len;
         // printf("remain %d ideal_length %d\n", remain, ideal_length);
 
-        if (remain >= ideal_length)
+        if (remain >= idealLength(strlen(fPtr->name)))
         {
             // printf("inside for ~ inside if condition\n");
             dp->rec_len = idealLength(strlen(dp->name));
@@ -79,8 +77,8 @@ int enter_child(MINODE *pip, DIR *fPtr)
         else
         {
             // for later use
-            if (pip->INODE.i_block[i + 1] == 0)
-                return -1;
+            if (i < 12)
+                continue;
         }
     }
 
