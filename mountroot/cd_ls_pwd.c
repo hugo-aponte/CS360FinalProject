@@ -1,69 +1,121 @@
-// #include "type.h"
+#include "type.h"
 
-// /************* cd_ls_pwd.c file **************/
-// /************** IGNORING FILE, IMPLEMENTED WITHIN MAIN.C ******************/ 
-// int cd()
-// {
-//   printf("cd: under construction READ textbook!!!!\n");
+extern MINODE minode[NMINODE];
+extern MINODE *root;
+extern PROC proc[NPROC], *running;
 
-//   // READ Chapter 11.7.3 HOW TO chdir
-// }
+extern char gpath[128];
+extern char *name[64];
+extern int n;
 
-// int ls_file(MINODE *mip, char *name)
-// {
-//   printf("ls_file: to be done: READ textbook!!!!\n");
-//   // READ Chapter 11.7.3 HOW TO ls
-// }
+extern int fd, dev;
+extern int nblocks, ninodes, bmap, imap, iblk;
+extern char line[128], cmd[32], pathname[128];
 
-// int ls_dir(MINODE *mip)
-// {
-//   printf("ls_dir: list CWD's file names; YOU FINISH IT as ls -l\n");
+// ************ cd *****************
+int cd()
+{
+    int ino = getino(pathname);
+    MINODE *mip;
 
-//   char buf[BLKSIZE], temp[256];
-//   DIR *dp;
-//   char *cp;
+    // verify ino != 0
+    if (!ino)
+    {
+        printf("cd: FAIL\n");
+        return -1;
+    }
 
-//   get_block(dev, mip->INODE.i_block[0], buf);
-//   dp = (DIR *)buf;
-//   cp = buf; 
-  
-//   while (cp < buf + BLKSIZE){
-//      strncpy(temp, dp->name, dp->name_len);
-//      temp[dp->name_len] = 0;
-	
-//      printf("%s  ", temp);
+    mip = iget(dev, ino);
 
-//      cp += dp->rec_len;
-//      dp = (DIR *)cp;
-//   }
-//   printf("\n");
-// }
+    // verify mip->INODE is a directory
+    if (!S_ISDIR(mip->INODE.i_mode))
+    {
+        printf("cd: FAIL\n");
+        return -1;
+    }
 
-// int ls()
-// {
-//   printf("ls: list CWD only! YOU FINISH IT for ls pathname\n");
-//   ls_dir(running->cwd);
-// }
+    iput(running->cwd); // release old cwd
+    running->cwd = mip; // change cwd to mip
 
-// char *pwd(MINODE *wd)
-// {
-//   printf("pwd: READ HOW TO pwd in textbook!!!!\n");
-//   if (wd == root){
-//     printf("/\n");
-//     return "/";
-//   }
-// }
+    printf("cd: OK\n");
+    return 0;
+}
 
-// int quit()
-// {
-//   int i;
-//   MINODE *mip;
-//   for (i=0; i<NMINODE; i++){
-//     mip = &minode[i];
-//     if (mip->refCount > 0)
-//       iput(mip);
-//   }
-//   exit(0);
-// }
+// ************ ls *****************
+int ls()
+{
+    unsigned long ino;
+    MINODE *mip, *pip;
+    // int device = running->cwd->dev;
+    char *child;
 
+    // check if pathname was entered, if not then set mip to iget call relative to global dev and running->cwd->ino number and run ls_dir on mip
+    if (pathname[0] == 0)
+    {
+        mip = iget(dev, running->cwd->ino);
+        ls_dir(mip, dev);
+    }
+    else
+    {
+        // check if pathname begins with '/'
+        if (pathname[0] == '/')
+        {
+            // set dev to root->dev
+            dev = root->dev;
+        }
 
+        // get inode number of pathname
+        ino = getino(pathname);
+
+        // check if getino worked
+        if (ino == -1 || ino == 0)
+        {
+            return 1;
+        }
+
+        // if ino worked, set MINODE mip to iget call for global dev and extracted inode number
+        mip = iget(dev, ino);
+
+        // check if mip is a directory
+        if ((mip->INODE.i_mode & 0040000) != 0040000)
+        {
+            // ensure pathname contains parent
+            if (findparent(pathname))
+            {
+                child = basename(pathname);
+            }
+            else // if not, allocate new heap space for child character array with the size of pathname and set to pathname
+            {
+                child = (char *)malloc((strlen(pathname) + 1) * sizeof(char));
+                strcpy(child, pathname);
+            }
+
+            // print file from ls_file using mip and extracted child name
+            ls_file(mip, child);
+
+            // release MINODE mip
+            iput(mip);
+            return 0;
+        }
+
+        // print directory from ls_dir using MINODE mip
+        ls_dir(mip, dev);
+    }
+
+    // release MINODE mip
+    iput(mip);
+}
+
+// ************ pwd *****************
+void pwd(MINODE *wd)
+{
+    if (wd == root)
+    {
+        printf("/\n");
+        return;
+    }
+
+    rpwd(wd);
+    printf("\n");
+    return;
+}
