@@ -33,6 +33,12 @@ DIR *dp;
 #define BLKSIZE 1024
 #define NMINODE 128
 #define NPROC 2
+#define NFD 2
+
+#define RD 0
+#define WR 1
+#define RW 2
+#define AP 3
 
 typedef struct minode
 {
@@ -40,7 +46,7 @@ typedef struct minode
   int dev, ino; // (dev, ino) of INODE
   int refCount; // in use count
   int dirty;    // 0 for clean, 1 for modified
-
+  int lock;
   int mounted;          // for level-3
   struct mntable *mptr; // for level-3
 } MINODE;
@@ -54,6 +60,7 @@ typedef struct proc
   int uid; // user ID
   int gid;
   MINODE *cwd; // CWD directory pointer
+  OFT *fd[NFD]
 } PROC;
 
 typedef struct mtable
@@ -70,6 +77,13 @@ typedef struct mtable
   char devName[64];
   char mntName[64];
 } MTABLE;
+
+typedef struct oft{
+  int mode;
+  int refCount;
+  int offset;
+  MINODE *minodePtr;
+} OFT;
 
 int get_block(int dev, int blk, char *buf);
 int put_block(int dev, int blk, char *buf);
