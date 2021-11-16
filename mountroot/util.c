@@ -331,6 +331,77 @@ int getino(char *pathname)
    return ino;
 }
 
+int truncate(MINODE *mip)
+{
+   INODE *ip = &mip->INODE;
+
+   // direct blocks
+   for(int i = 0; i < 12; i++)
+   {
+      if(ip->i_block[i] != 0)
+      {
+         bdalloc(dev, ip->i_block[i]);
+      }
+   }
+
+   // indirect blocks
+   if(ip->i_block[12] != 0)
+   {
+      char buf[BLKSIZE];
+      int blk;
+      int *cp;
+      get_block(dev, ip->i_block[12], buf);
+      cp = buf;
+
+      while(cp < &buf[BLKSIZE])
+      {
+         blk = *cp;
+         
+         if(blk)
+         {
+            bdalloc(dev, blk);
+         }
+         cp += 1;
+      }
+   }
+
+   // double indirect blocks
+   // if(ip->i_block[13])
+   // {
+   //    char buf1[BLKSIZE];
+   //    char buf2[BLKSIZE];
+   //    int blk1, blk2;
+   //    int *cp1, *cp2;
+
+   //    get_block(dev, ip->i_block[13], buf1);
+   //    cp1 = buf1;
+   //    while(cp1 < &buf1[BLKSIZE])
+   //    {
+   //       blk1 = *cp1;
+   //       if(!blk1)
+   //       {
+   //          break;
+   //       }
+         
+   //       get_block(dev, blk1, buf2);
+   //       cp2 = buf2;
+   //       while(cp2 < &buf2[BLKSIZE])
+   //       {
+   //          blk2 = *cp2;
+
+   //             if(blk2)
+   //             {
+   //                bdalloc(dev, blk2);
+   //             }
+   //             cp2 += 1;
+   //       }
+   //       cp1 += 1;
+   //    }
+   // }
+   return 0;
+}
+
+
 int findparent(char *pathname)
 {
    int i = 0;
