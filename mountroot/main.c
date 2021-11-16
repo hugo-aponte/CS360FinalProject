@@ -119,6 +119,13 @@ int main(int argc, char *argv[])
   running = &proc[1];
   running->cwd = root;
 
+  // for (int i = 0; i < 100; i++)
+  // {
+  //   strcpy(pathname, "d");
+  //   sprintf(pathname, "%d", i);
+  //   myMkdir();
+  // }
+
   while (1)
   {
     printf("P%d running: ", running->pid);

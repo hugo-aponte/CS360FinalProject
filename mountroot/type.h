@@ -84,7 +84,7 @@ int tokenize(char *pathname);
 int iput(MINODE *mip);
 int findparent(char *pathname);
 int idealLength(int len);
-int decFreeInodes(int dev, char *buf);
+int decFreeInodes(int dev);
 int incFreeInodes(int dev);
 int tst_bit(char *buf, int bit);
 int set_bit(char *buf, int bit);

@@ -27,10 +27,10 @@ int enter_child(MINODE *pip, DIR *fPtr)
 
     for (int i = 0; i < 12; i++)
     {
-        // printf("inside for loop\n");
+        printf("inside block%d\n", i);
 
-        if (pip->INODE.i_block[i] == 0)
-            break;
+        // if (pip->INODE.i_block[i] == 0)
+        //     break;
 
         get_block(pip->dev, pip->INODE.i_block[i], buf);
         dp = (DIR *)buf;

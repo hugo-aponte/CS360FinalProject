@@ -110,8 +110,9 @@ int bdalloc(int dev, int blk)
 
 int idealLength(int len) { return 4 * ((8 + len + 3) / 4); }
 
-int decFreeInodes(int dev, char *buf)
+int decFreeInodes(int dev)
 {
+   char *buf;
    // dec free inodes count in SUPER and GD
    get_block(dev, 1, buf);
    sp = (SUPER *)buf;
@@ -260,25 +261,30 @@ int search(MINODE *mip, char *name)
    ip = &(mip->INODE);
 
    /*** search for name in mip's data blocks: ASSUME i_block[0] ONLY ***/
-
-   get_block(dev, ip->i_block[0], sbuf);
-   dp = (DIR *)sbuf;
-   cp = sbuf;
-   printf("  ino   rlen  nlen  name\n");
-
-   while (cp < sbuf + BLKSIZE)
+   for (int i = 0; i < 12; i++)
    {
-      strncpy(temp, dp->name, dp->name_len);
-      temp[dp->name_len] = 0;
-      printf("%4d  %4d  %4d    %s\n",
-             dp->inode, dp->rec_len, dp->name_len, dp->name);
-      if (strcmp(temp, name) == 0)
+      if (!ip->i_block[i])
+         continue;
+
+      get_block(dev, ip->i_block[i], sbuf);
+      dp = (DIR *)sbuf;
+      cp = sbuf;
+      printf("  ino   rlen  nlen  name\n");
+
+      while (cp < sbuf + BLKSIZE)
       {
-         printf("found %s : ino = %d\n", temp, dp->inode);
-         return dp->inode;
+         strncpy(temp, dp->name, dp->name_len);
+         temp[dp->name_len] = 0;
+         printf("%4d  %4d  %4d    %s\n",
+                dp->inode, dp->rec_len, dp->name_len, dp->name);
+         if (strcmp(temp, name) == 0)
+         {
+            printf("found %s : ino = %d\n", temp, dp->inode);
+            return dp->inode;
+         }
+         cp += dp->rec_len;
+         dp = (DIR *)cp;
       }
-      cp += dp->rec_len;
-      dp = (DIR *)cp;
    }
    return 0;
 }
@@ -516,7 +522,7 @@ int kcreat(MINODE *pmip, char *filename)
    ip->i_block[0] = blk;
    mip->refCount = 0;
 
-   for (int i = 1; i < 13; i++)
+   for (int i = 1; i < 12; i++)
    {
       ip->i_block[i] = 0; // set other inode blocks to 0
    }
@@ -563,7 +569,7 @@ DIR kmkdir(MINODE *pmip, char *fileName)
    ip->i_blocks = 2;     // linux: blocks count in 512-byte chunks
    ip->i_block[0] = blk; // new DIR has one data block
 
-   for (int i = 1; i < 15; i++)
+   for (int i = 1; i < 12; i++)
       ip->i_block[i] = 0; // setting all other blocks to 0
 
    mip->dirty = 1; // mark minode dirty

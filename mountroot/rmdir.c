@@ -50,7 +50,7 @@ int rm_child(MINODE *pip, char *fName, int ino)
             name[dp->name_len] = 0;
             // set inode number to that of the current directory
 
-            printf("compairing %s to %s\n", name, fName);
+            //printf("compairing %s to %s\n", name, fName);
             if (!strcmp(name, fName))
             {
                 // bdalloc(dev, pip->INODE.i_block[i]);
