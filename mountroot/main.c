@@ -16,7 +16,6 @@ int n;           // number of component strings
 int fd, dev;
 int nblocks, ninodes, bmap, imap, iblk;
 char line[128], cmd[32], pathname[128], destination[128];
-
 // #include "cd_ls_pwd.c"
 // #include "util.c"
 
@@ -118,13 +117,15 @@ int main(int argc, char *argv[])
   // P1 created as user process
   running = &proc[1];
   running->cwd = root;
+  char temp[128];
+  strcpy(temp, "d");
 
-  // for (int i = 0; i < 100; i++)
-  // {
-  //   strcpy(pathname, "d");
-  //   sprintf(pathname, "%d", i);
-  //   myMkdir();
-  // }
+  for (int i = 0; i < 200; i++)
+  {
+    strcpy(pathname, temp);
+    myMkdir();
+    sprintf(temp, "%s%d", "d", i);
+  }
 
   while (1)
   {
