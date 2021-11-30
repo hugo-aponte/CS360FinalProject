@@ -331,7 +331,7 @@ int getino(char *pathname)
    return ino;
 }
 
-int truncate(MINODE *mip)
+int myTruncate(MINODE *mip)
 {
    INODE *ip = &mip->INODE;
 
@@ -366,38 +366,43 @@ int truncate(MINODE *mip)
    }
 
    // double indirect blocks
-   // if(ip->i_block[13])
-   // {
-   //    char buf1[BLKSIZE];
-   //    char buf2[BLKSIZE];
-   //    int blk1, blk2;
-   //    int *cp1, *cp2;
+   if(ip->i_block[13])
+   {
+      char buf1[BLKSIZE];
+      char buf2[BLKSIZE];
+      int blk1, blk2;
+      int *cp1, *cp2;
 
-   //    get_block(dev, ip->i_block[13], buf1);
-   //    cp1 = buf1;
-   //    while(cp1 < &buf1[BLKSIZE])
-   //    {
-   //       blk1 = *cp1;
-   //       if(!blk1)
-   //       {
-   //          break;
-   //       }
+      get_block(dev, ip->i_block[13], buf1);
+      cp1 = buf1;
+      while(cp1 < &buf1[BLKSIZE])
+      {
+         blk1 = *cp1;
+         if(!blk1)
+         {
+            break;
+         }
          
-   //       get_block(dev, blk1, buf2);
-   //       cp2 = buf2;
-   //       while(cp2 < &buf2[BLKSIZE])
-   //       {
-   //          blk2 = *cp2;
+         get_block(dev, blk1, buf2);
+         cp2 = buf2;
+         while(cp2 < &buf2[BLKSIZE])
+         {
+            blk2 = *cp2;
 
-   //             if(blk2)
-   //             {
-   //                bdalloc(dev, blk2);
-   //             }
-   //             cp2 += 1;
-   //       }
-   //       cp1 += 1;
-   //    }
-   // }
+               if(blk2)
+               {
+                  bdalloc(dev, blk2);
+               }
+               cp2 += 1;
+         }
+         cp1 += 1;
+      }
+   }
+
+   mip->INODE.i_atime = time(0L);
+   mip->INODE.i_size = 0;
+   mip->dirty = 1;
+
    return 0;
 }
 

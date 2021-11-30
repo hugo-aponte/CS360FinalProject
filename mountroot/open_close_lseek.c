@@ -12,7 +12,7 @@ extern int n;
 
 extern int fd, dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
-extern char line[128], cmd[32], pathname[128];
+extern char line[128], cmd[32], pathname[128], position[10];
 
 int open_file()
 {
@@ -78,7 +78,7 @@ int open_file()
     }
     else if(mode == WR)
     {
-        truncate(mip);
+        myTruncate(mip);
         openTable->offset = 0;
     }
     else if(mode == AP)
@@ -104,10 +104,234 @@ int open_file()
     }
 
     // update the access time of the MINODE, lock it, and mark it dirty
-    mip->INODE.i_atime = time(0L);
+    if(mode == RD)
+        mip->INODE.i_atime = time(0L);
+    else
+        mip->INODE.i_atime = mip->INODE.i_mtime = time(0L);
+
     mip->lock = mode;
     mip->dirty = 1;
 
     // return index of file descriptor
     return index;
+}
+
+int close_file()
+{
+    printf("Entering close\n");
+
+    // get fd from pathname
+    int ino, fd = -1;
+    MINODE *mip, *oftmip;
+    char filename[64];
+    OFT *openTable;
+
+    // get name of file, separate from path
+    strcpy(filename, pathname);
+    strcpy(filename, basename(filename));
+
+    // get inode number for file
+    ino = getino(filename);
+
+    // adjust dev based on pathname
+    if(pathname[0] == '/')
+    {
+        dev = root->dev;
+    }
+    else
+    {
+        dev = running->cwd->dev;
+    }
+
+    MINODE *mip = iget(dev, ino);
+    
+    if(!mip)
+    {
+        printf("close: file %s not found\n", filename);
+        return -1;
+    }
+
+    // look for file's fd
+    for(int i = 0; i < NFD; i++)
+    {
+        if(running->fd[i] != NULL)
+        {
+            openTable = running->fd[i];
+            oftmip = openTable->minodePtr;
+
+            if(mip == oftmip)
+            {
+                // found file at fd[i]
+                fd = i;
+                break;
+            }
+        }
+    }
+
+    // verify fd
+    if(fd < 0)
+    {
+        printf("close: file %s not found in OFT\n", filename);
+        return -1;
+    }
+
+    // verify openTable (running->fd[fd]) is pointing at OFT entry
+    if(openTable != NULL)
+    {
+        running->fd[fd] = NULL;
+
+        // decrement refcount
+        openTable->refCount--;
+
+        // verify file is not being referenced
+        if(openTable->refCount > 0)
+        {
+            printf("close: refcount %d\n", openTable->refCount);
+            return 0;
+        }
+        
+        // no other oft references, dispose of oftmip
+        iput(oftmip);
+    }
+
+    printf("Exiting close\n");
+    return 0;
+}
+
+int myLseek()
+{
+    int fd = -1, pos, ino, originalPos = -1;
+    MINODE *mip;
+    OFT *openTable;
+
+    // check pathname and position
+    if(pathname[0] == 0)
+    {
+        printf("lseek: pathname is null\n");
+        return -1;
+    }
+
+    if(position[0] == 0)
+    {
+        printf("lseek: position is null\n");
+        return -1;
+    }
+
+    ino = getino(pathname);
+    mip = iget(dev, ino);
+
+    // extract file descriptor
+    for(int i = 0; i < NFD; i++)
+    {
+        if(running->fd[i] != NULL)
+        {
+            openTable = running->fd[i];
+
+            // verify file in openTable
+            if(openTable->minodePtr == mip)
+            {
+                fd = i;
+                break;
+            }
+        }
+    }
+
+    pos = atoi(position);
+
+    // use extracted file descriptor and given position for lseek
+    if(!fd)
+    {
+        printf("lseek: fd is null\n");
+        return -1;
+    }
+
+    // verify an openTable was found
+    if(openTable == NULL)
+    {
+        printf("lseek: openTable is null\n");
+        return -1;
+    }
+
+    // verify openTable refCount is > 0
+    if(openTable->refCount < 0)
+    {
+        printf("lseek: openTable refcount is < 0\n");
+        return -1;
+    }
+
+    // change OFT entry's offset to position but make sure NOT to over run either end of the file
+    originalPos = openTable->offset;
+
+    if(pos <= openTable->minodePtr->INODE.i_size)
+    {
+        openTable->offset = pos;
+    }
+    else{
+        printf("lseek: out of boundary exception\n");
+        return -1;
+    }
+
+    // return original position
+    return originalPos;
+}
+
+int pfd()
+{
+    // disply the currently opened files to help the user know what files have been opened
+    OFT *openTable;
+    MINODE *mip;
+    printf("fd\tmode\toffset\tINODE\n");
+    printf("----\t----\t------\t--------\n");
+
+    for(int i = 0; i < NFD; i++)
+    {
+        // check every openTable in running process 
+        // if open, it should not be NULL
+        if(running->fd[i] != NULL)
+        {
+            openTable = running->fd[i];
+            mip = openTable->minodePtr;
+            printf("%d\t%d\t%d\t[%d, %d]\n", i, openTable->mode, openTable->offset, dev, mip->ino);
+        }
+    }
+
+    printf("--------------------------------------\n");
+    return 0;
+}
+
+int dup(int fd)
+{
+    // verify fd is an opened descriptor
+    if(fd >= 0 && fd < NFD && running->fd[fd] != NULL)
+    {
+        // openTable is accessible
+        for(int i = 0; i < NFD; i++)
+        {
+            // look for the next NULL OFT
+            if(running->fd[i] == NULL)
+            {
+                // duplicate openTable at given fd to next NULL OFT
+                running->fd[i] = running->fd[fd];
+                running->fd[fd]->refCount++;
+                return i;
+            }
+        }
+    }
+
+    printf("dup: fd is not an opened descriptor\n");
+    return -1;
+}
+
+int dup2(int fd, int gd)
+{
+    // close gd if it is open
+    if(running->fd[gd] != NULL)
+    {
+        close_file(gd);
+    }
+
+    running->fd[gd] = running->fd[fd];
+    running->fd[fd]->refCount++;
+
+    return 0;
 }

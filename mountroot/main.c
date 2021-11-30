@@ -15,7 +15,7 @@ int n;           // number of component strings
 
 int fd, dev;
 int nblocks, ninodes, bmap, imap, iblk;
-char line[128], cmd[32], pathname[128], destination[128];
+char line[128], cmd[32], pathname[128], destination[128], position[10];
 // #include "cd_ls_pwd.c"
 // #include "util.c"
 

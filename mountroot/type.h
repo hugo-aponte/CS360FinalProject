@@ -106,6 +106,7 @@ int balloc(int dev);
 int ialloc(int dev); // allocate an inode number from inode_bitmap
 int idalloc(int dev, int ino);
 int bdalloc(int dev, int blk);
+int myTruncate(MINODE *mip);
 
 // cd_ls_pwd
 int cd();
@@ -138,6 +139,14 @@ int myUnlink();
 // link_unlink
 int myLink();
 int mySymLink();
+
+// open_close_lseek
+int open_file();
+int close_file();
+int myLseek();
+int pfd();
+int dup(int fd);
+int dup2(int fd, int gd);
 
 // misc
 int myStat(int dev, char *pathname);
