@@ -656,7 +656,7 @@ DIR kmkdir(MINODE *pmip, char *fileName)
    dp->name_len = 1;
    dp->name[0] = '.';
    dp->file_type = (u8)EXT2_FT_DIR;
-   // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0]);
+   printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0]);
 
    // make .. entry: pmip->ino=parent DIR ino, blk=allocated block
    dp = (DIR *)((char *)dp + dp->rec_len);
@@ -665,7 +665,7 @@ DIR kmkdir(MINODE *pmip, char *fileName)
    dp->name_len = 2;
    dp->name[0] = dp->name[1] = '.';
    dp->file_type = (u8)EXT2_FT_DIR;
-   // printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0], dp->name[1]);
+   printf("dp: inode=%d, rec_len=%d, name_len=%d, dp->name=%c%c\n", dp->inode, dp->rec_len, dp->name_len, dp->name[0], dp->name[1]);
 
    put_block(mip->dev, blk, buf); // write to blk on disk
 

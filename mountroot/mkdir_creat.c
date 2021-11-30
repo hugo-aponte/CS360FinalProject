@@ -28,57 +28,68 @@ int enter_child(MINODE *pip, DIR *fPtr)
     for (int i = 0; i < 12; i++)
     {
         printf("inside block%d\n", i);
-
-        // if (pip->INODE.i_block[i] == 0)
-        //     break;
-
         get_block(pip->dev, pip->INODE.i_block[i], buf);
         dp = (DIR *)buf;
         cp = buf;
 
-        // find last directory entry
-        while (cp + dp->rec_len < buf + BLKSIZE)
+        printf("block value = %d\n", pip->INODE.i_block[i]);
+
+        if (pip->INODE.i_block[i] == 0)
         {
-            // printf("inside for ~ inside while\n");
-            if (dp->rec_len == 0)
-                break;
-
-            cp += dp->rec_len;
-            dp = (DIR *)cp;
-        }
-
-        // cp and dp should be ready to enter fptr
-        // printf("last entry is %s\n", dp->name);
-        cp = (char *)dp;
-
-        // remaining bytes in current block;
-        remain = dp->rec_len;
-        // printf("remain %d ideal_length %d\n", remain, ideal_length);
-
-        if (remain >= idealLength(strlen(fPtr->name)))
-        {
-            // printf("inside for ~ inside if condition\n");
-            dp->rec_len = idealLength(strlen(dp->name));
-            remain -= dp->rec_len;
-
-            cp += dp->rec_len;
-            newFile = (DIR *)cp;
-
+            int nblk = balloc(dev);
+            pip->INODE.i_block[i] = nblk;
+            pip->INODE.i_blocks++;
+            printf("adding to empty blocks\n");
+            printf("\n\n-->pip_iblocks = %u<--\n\n", pip->INODE.i_blocks);
+            newFile = dp;
+            newFile->rec_len = BLKSIZE;
             newFile->inode = fPtr->inode;
             newFile->name_len = fPtr->name_len;
-
-            // newFile should take over remaining size
-            newFile->rec_len = remain;
             strncpy(newFile->name, fPtr->name, fPtr->name_len);
-            // printf("putting this at pip->INODE.i_block[%d]=%d | newfile: inode=%d rec_len=%d name_len=%d\n", i, pip->INODE.i_block[i], newFile->inode, newFile->rec_len, newFile->name_len);
-
+            //printf("name %s\n", newFile->name);
             put_block(pip->dev, pip->INODE.i_block[i], buf);
+            return 0;
         }
         else
         {
-            // for later use
-            if (i < 12)
-                continue;
+            // find last directory entry
+            while (cp + dp->rec_len < buf + BLKSIZE)
+            {
+                // printf("inside for ~ inside while\n");
+                if (dp->rec_len == 0)
+                    break;
+
+                cp += dp->rec_len;
+                dp = (DIR *)cp;
+            }
+
+            // cp and dp should be ready to enter fptr
+            // printf("last entry is %s\n", dp->name);
+            cp = (char *)dp;
+
+            // remaining bytes in current block;
+            remain = dp->rec_len - idealLength(dp->name_len);
+            // printf("remain %d ideal_length %d\n", remain, ideal_length);
+
+            if (remain >= idealLength(fPtr->name_len))
+            {
+                // printf("inside for ~ inside if condition\n");
+                dp->rec_len = idealLength(strlen(dp->name));
+
+                cp += dp->rec_len;
+                newFile = (DIR *)cp;
+
+                newFile->inode = fPtr->inode;
+                newFile->name_len = fPtr->name_len;
+
+                // newFile should take over remaining size
+                newFile->rec_len = remain;
+                strncpy(newFile->name, fPtr->name, fPtr->name_len);
+                // printf("putting this at pip->INODE.i_block[%d]=%d | newfile: inode=%d rec_len=%d name_len=%d\n", i, pip->INODE.i_block[i], newFile->inode, newFile->rec_len, newFile->name_len);
+
+                put_block(pip->dev, pip->INODE.i_block[i], buf);
+                break;
+            }
         }
     }
 

@@ -1,6 +1,4 @@
 sudo mke2fs -b 2024 disk 2440  # renew the disk image file
 # sudo ./s
-echo "making now"
 sudo ./mk
-echo "running now"
 sudo ./a.out
