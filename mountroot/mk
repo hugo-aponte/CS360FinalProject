@@ -1,6 +1,6 @@
 rm a.out 2> /dev/null
 
 echo "compiling"
-gcc main.c util.c cd_ls_pwd.c mkdir_creat.c link_unlink.c symlink.c rmdir.c
+gcc main.c util.c cd_ls_pwd.c mkdir_creat.c link_unlink.c symlink.c rmdir.c open_close_lseek.c read_cat.c
 
 

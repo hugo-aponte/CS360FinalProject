@@ -48,8 +48,15 @@ typedef struct minode
   int dirty;    // 0 for clean, 1 for modified
   int lock;
   int mounted;          // for level-3
-  struct mntable *mptr; // for level-3
+  // struct mntable *mptr; // for level-3
 } MINODE;
+
+typedef struct oft{
+  int mode;
+  int refCount;
+  int offset;
+  MINODE *minodePtr;
+} OFT;
 
 typedef struct proc
 {
@@ -60,7 +67,7 @@ typedef struct proc
   int uid; // user ID
   int gid;
   MINODE *cwd; // CWD directory pointer
-  OFT *fd[NFD]
+  OFT *fd[NFD];
 } PROC;
 
 typedef struct mtable
@@ -78,13 +85,7 @@ typedef struct mtable
   char mntName[64];
 } MTABLE;
 
-typedef struct oft{
-  int mode;
-  int refCount;
-  int offset;
-  MINODE *minodePtr;
-} OFT;
-
+// util
 int get_block(int dev, int blk, char *buf);
 int put_block(int dev, int blk, char *buf);
 MINODE *iget(int dev, int ino);
@@ -92,8 +93,6 @@ int search(MINODE *mip, char *name);
 int getino(char *pathname);
 int findmyname(MINODE *parent, u32 myino, char myname[]);
 int findino(MINODE *mip, u32 *myino); // myino = i# of . return i# of ..
-
-// util
 int tokenize(char *pathname);
 int iput(MINODE *mip);
 int findparent(char *pathname);
@@ -147,6 +146,10 @@ int myLseek();
 int pfd();
 int dup(int fd);
 int dup2(int fd, int gd);
+
+// read_cat
+int read_file();
+int myRead(int fd, char *buf, int nbytes);
 
 // misc
 int myStat(int dev, char *pathname);

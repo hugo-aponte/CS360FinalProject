@@ -1,5 +1,5 @@
 /****************************************************************************
-*                   HEA: mount root file system                             *
+*                   HEA: & JS: EXT2 File System                             *
 *****************************************************************************/
 #include "type.h"
 
@@ -13,11 +13,9 @@ char gpath[128]; // global for tokenized components
 char *name[64];  // assume at most 64 components in pathname
 int n;           // number of component strings
 
-int fd, dev;
+int fd, dev, *mode;
 int nblocks, ninodes, bmap, imap, iblk;
 char line[128], cmd[32], pathname[128], destination[128], position[10];
-// #include "cd_ls_pwd.c"
-// #include "util.c"
 
 int init()
 {
@@ -33,7 +31,7 @@ int init()
     mip->dev = mip->ino = 0;
     mip->refCount = 0;
     mip->mounted = 0;
-    mip->mptr = 0;
+    // mip->mptr = 0;
   }
   for (i = 0; i < NPROC; i++)
   {
@@ -117,20 +115,22 @@ int main(int argc, char *argv[])
   // P1 created as user process
   running = &proc[1];
   running->cwd = root;
-  char temp[128];
-  strcpy(temp, "d");
+ 
+  // char temp[128];
+  // strcpy(temp, "d");
 
-  for (int i = 0; i < 200; i++)
-  {
-    strcpy(pathname, temp);
-    myMkdir();
-    sprintf(temp, "%s%d", "d", i);
-  }
+  // testing block creation
+  // for (int i = 0; i < 200; i++)
+  // {
+  //   strcpy(pathname, temp);
+  //   myMkdir();
+  //   sprintf(temp, "%s%d", "d", i);
+  // }
 
   while (1)
   {
     printf("P%d running: ", running->pid);
-    printf("input command : [ls|cd|pwd|mkdir|rmdir|creat|link|symlink|unlink|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|rmdir|creat|link|symlink|unlink|open|close|lseek|read|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line) - 1] = 0;
 
@@ -171,5 +171,26 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(cmd, "rmdir") == 0)
       printf("%d", myRmdir());
+    else if (strcmp(cmd, "open") == 0)
+    {
+      sscanf(line, "%s %s %d", cmd, pathname, mode);
+      printf("pathname=%s, mode=%d\n", pathname, *mode);
+      open_file();
+    }
+    else if (strcmp(cmd, "close") == 0)
+      close_file();
+    else if (strcmp(cmd, "lseek") == 0)
+    {
+      sscanf(line, "%s %s %s", cmd, pathname, position);
+      printf("pathname=%s, position=%s\n", pathname, position);
+      myLseek();
+    }
+    else if (strcmp(cmd, "read") == 0)
+    {
+      sscanf(line, "%s %s %s", cmd, pathname, destination);
+      printf("pathname=%s, destination(nbytes)=%s\n", pathname, destination);
+      read_file();
+    }
+    // else if write
   }
 }

@@ -1,6 +1,6 @@
 #include "type.h"
 
-extern int mode;
+extern int *mode;
 
 extern MINODE minode[NMINODE];
 extern MINODE *root;
@@ -67,28 +67,28 @@ int open_file()
     // allocate an openTable entry OFT; initialize OFT entries
     OFT *openTable = (OFT *)malloc(sizeof(OFT));
 
-    openTable->mode = mode;
+    openTable->mode = *mode;
     openTable->minodePtr = mip;
     openTable->refCount = 1;
 
     // check mode for offset
-    if(mode == RD || mode == RW)
+    if(*mode == RD || *mode == RW)
     {
         openTable->offset = 0;
     }
-    else if(mode == WR)
+    else if(*mode == WR)
     {
         myTruncate(mip);
         openTable->offset = 0;
     }
-    else if(mode == AP)
+    else if(*mode == AP)
     {
         openTable->offset = mip->INODE.i_size;
     }
     else
     {
         // error case
-        printf("open: mode %d not recognized", mode);
+        printf("open: mode %d not recognized", *mode);
         return -1;
     }
 
@@ -104,12 +104,12 @@ int open_file()
     }
 
     // update the access time of the MINODE, lock it, and mark it dirty
-    if(mode == RD)
+    if(*mode == RD)
         mip->INODE.i_atime = time(0L);
     else
         mip->INODE.i_atime = mip->INODE.i_mtime = time(0L);
 
-    mip->lock = mode;
+    mip->lock = *mode;
     mip->dirty = 1;
 
     // return index of file descriptor
@@ -142,8 +142,8 @@ int close_file()
     {
         dev = running->cwd->dev;
     }
-
-    MINODE *mip = iget(dev, ino);
+    
+    mip = iget(dev, ino);
     
     if(!mip)
     {

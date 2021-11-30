@@ -349,7 +349,7 @@ int myTruncate(MINODE *mip)
    {
       char buf[BLKSIZE];
       int blk;
-      int *cp;
+      char *cp;
       get_block(dev, ip->i_block[12], buf);
       cp = buf;
 
@@ -371,7 +371,7 @@ int myTruncate(MINODE *mip)
       char buf1[BLKSIZE];
       char buf2[BLKSIZE];
       int blk1, blk2;
-      int *cp1, *cp2;
+      char *cp1, *cp2;
 
       get_block(dev, ip->i_block[13], buf1);
       cp1 = buf1;
