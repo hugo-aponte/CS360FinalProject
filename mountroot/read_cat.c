@@ -8,7 +8,7 @@ extern char gpath[128]; // global for tokenized components
 extern char *name[64];  // assume at most 64 components in pathname
 extern int n;           // number of component strings
 
-extern int dev;
+extern int dev, mode;
 extern int nblocks, ninodes, bmap, imap, iblk;
 extern char line[128], cmd[32], pathname[128], destination[128];
 
@@ -61,7 +61,7 @@ int read_file()
 
 int myRead(int fd, char *buf, int nbytes)
 {
-    printf("\nEntering myread\n");
+    // printf("\nEntering myread\n");
 
     OFT *openTable;
     MINODE *mip;
@@ -80,14 +80,14 @@ int myRead(int fd, char *buf, int nbytes)
     // get available bytes from mip and oftOffset
     avail = mip->INODE.i_size - openTable->offset;
 
-    printf("Entering while loop | nbytes=%d, avail=%d\n", nbytes, avail);
+    // printf("Entering while loop | nbytes=%d, avail=%d\n", nbytes, avail);
     while(nbytes && avail)
     {
         // get lbk and start
         lbk = openTable->offset / BLKSIZE;
         start = openTable->offset % BLKSIZE;
 
-        printf("lbk=%d, start=%d\n", lbk, start);
+        // printf("lbk=%d, start=%d\n", lbk, start);
 
         // check lbk for direct, indirect, and double indirect
         if(lbk < 12)
@@ -123,7 +123,7 @@ int myRead(int fd, char *buf, int nbytes)
         cp = readBuf + start;
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
-        printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
+        // printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         while(remain > 0)
         {
             *cq++ = *cp++;
@@ -134,12 +134,53 @@ int myRead(int fd, char *buf, int nbytes)
             if (nbytes <= 0 || avail <= 0)
                 break;
         }
-        printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
+        // printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if one data block is not enough, loop back to OUTER while for more 
     }
 
-    printf("myRead: read %d char from file descriptor %d\n", count, fd);
-    printf("----------------------\n%s\n----------------------\n", buf);
-    printf("Exiting myRead\n\n");
+    // printf("myRead: read %d char from file descriptor %d\n", count, fd);
+    // printf("----------------------\n%s\n----------------------\n", buf);
+    // printf("Exiting myRead\n\n");
     return count;
+}
+
+int myCat()
+{
+    // printf("\nEntering myCat\n");
+    
+    char mybuf[1024] = "\0", dummy = 0;
+    int n, fd;
+    mode = RD;
+
+    // calling open_file, expect to return fd index
+    // assuming: main.c should have set global pathname to the entered filename (open_file uses global pathname and mode)
+    // we manually set the global mode to RD
+    fd = open_file();
+
+    // check if file exists
+    if(fd < 0)
+    {
+        printf("cat: %s does not exist or fd=%d invalid\n", pathname, fd);
+        return -1;
+    }
+
+    // printf("cat: entering while loop\n");
+    while(n = myRead(fd, mybuf, 1024))
+    {
+        // make sure not to go out of bounds in case of error
+        if(n <= 0)
+            break;
+
+        mybuf[n] = 0; // as a null terminated string
+        printf("\n%s:\n----------------------\n%s\n----------------------\n", pathname, mybuf); // this works but not good
+
+        // spit out chars from mybuf[] but handle \n properly
+    }
+    // printf("cat: exiting while loop\n");
+
+    // close given file descriptor
+    close_file(fd);
+
+    // printf("Exiting myCat\n\n");
+    return 0;
 }

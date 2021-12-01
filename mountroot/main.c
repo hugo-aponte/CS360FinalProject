@@ -173,13 +173,15 @@ int main(int argc, char *argv[])
       printf("%d", myRmdir());
     else if (strcmp(cmd, "open") == 0)
     {
-      printf("inside if\n");
       sscanf(line, "%s %s %d", cmd, pathname, &mode);
       printf("pathname=%s, mode=%d\n", pathname, mode);
       open_file();
     }
     else if (strcmp(cmd, "close") == 0)
-      close_file();
+    {
+      int fd = atoi(pathname);
+      close_file(fd);
+    }
     else if (strcmp(cmd, "pfd") == 0)
       pfd();
     else if (strcmp(cmd, "lseek") == 0)
@@ -194,6 +196,8 @@ int main(int argc, char *argv[])
       printf("pathname=%s, destination(nbytes)=%s\n", pathname, destination);
       read_file();
     }
+    else if (strcmp(cmd, "cat") == 0)
+      myCat();
     // else if write
   }
 }

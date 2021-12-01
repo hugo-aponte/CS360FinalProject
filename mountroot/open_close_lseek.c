@@ -16,7 +16,7 @@ extern char line[128], cmd[32], pathname[128], position[10];
 
 int open_file()
 {
-    printf("\nEntering open\n");
+    // printf("\nEntering open\n");
 
     int ino;
     MINODE *mip;
@@ -72,10 +72,10 @@ int open_file()
     openTable->mode = mode;
     openTable->minodePtr = mip;
     openTable->refCount = 1;
-    printf("open: openTable instantiated\n");
+    // printf("open: openTable instantiated\n");
 
     // check mode for offset
-    printf("open: checking mode\n");
+    // printf("open: checking mode\n");
     if(mode == RD || mode == RW)
     {
         openTable->offset = 0;
@@ -95,11 +95,11 @@ int open_file()
         printf("open: mode %d not recognized", mode);
         return -1;
     }
-    printf("open: done checking mode\n");
+    // printf("open: done checking mode\n");
 
     // find the index of the running process
     int index;
-    printf("open: finding index of the running process OFT fd array\n");
+    // printf("open: finding index of the running process OFT fd array\n");
     for(index = 0; index < NFD; index++)
     {
         if(running->fd[index] == NULL)
@@ -120,16 +120,15 @@ int open_file()
 
     // return index of file descriptor
     printf("%s opened for %d mode=%d fd=%d\n", filename, mode, mode, mode);
-    printf("Exiting open\n\n");
+    // printf("Exiting open\n\n");
     return index;
 }
 
-int close_file()
+int close_file(int fd)
 {
-    printf("\nEntering close\n");
+    // printf("\nEntering close\n");
 
     // get fd from pathname
-    int fd = -1;
     MINODE *mip;
     OFT *openTable;
 
@@ -155,9 +154,8 @@ int close_file()
     
     mip = iget(dev, ino); */
     
-    // get fd and mip from given file descriptor in pathname variable
+    // get fd and mip from given file descriptor
     // name might be misleading
-    fd = atoi(pathname);
     openTable = running->fd[fd];
     mip = openTable->minodePtr;
     
@@ -194,7 +192,7 @@ int close_file()
     // verify openTable (running->fd[fd]) is pointing at OFT entry
     if(openTable != NULL)
     {
-        printf("close: setting file descriptor of running process's OFT array to NULL\n");
+        // printf("close: setting file descriptor of running process's OFT array to NULL\n");
         running->fd[fd] = NULL;
 
         // decrement refcount
@@ -208,11 +206,12 @@ int close_file()
         }
         
         // no other oft references, dispose of mip
-        printf("disposing of mip\n");
+        // printf("close: disposing of mip\n");
+        mip->lock = 0;
         iput(mip);
     }
 
-    printf("Exiting close\n\n");
+    // printf("Exiting close\n\n");
     return 0;
 }
 

@@ -141,7 +141,7 @@ int mySymLink();
 
 // open_close_lseek
 int open_file();
-int close_file();
+int close_file(int fd);
 int myLseek();
 int pfd();
 int dup(int fd);
@@ -150,6 +150,7 @@ int dup2(int fd, int gd);
 // read_cat
 int read_file();
 int myRead(int fd, char *buf, int nbytes);
+int myCat();
 
 // misc
 int myStat(int dev, char *pathname);
