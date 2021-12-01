@@ -14,7 +14,7 @@ extern char line[128], cmd[32], pathname[128], destination[128];
 
 int read_file()
 {
-    printf("Entering read_file\n");
+    printf("\nEntering read_file\n");
     // ASSUME: File is opened for RD or RW;
     // ask for a fd and nbytes to read;
     // verify that fd is indeed opened for RD or RW;
@@ -24,9 +24,11 @@ int read_file()
     MINODE *mip;
     char *buf;
 
+    // using pathname to extract file descriptor to read from
+    // name might be misleading 
     if(pathname[0] == 0)
     {
-        printf("read_file: pathname is null\n");
+        printf("read_file: file descriptor is null\n");
         return -1;
     }
 
@@ -38,7 +40,7 @@ int read_file()
         return -1;
     }
 
-    // get mip from pathname
+    // get mip from file descriptor in pathname
     ino = getino(pathname);
     mip = iget(dev, ino);
     
@@ -66,13 +68,13 @@ int read_file()
     // allocate nbytes in buf
     buf = (char*)malloc(nbytes);
 
-    printf("Exiting read_file\n");
+    printf("Exiting read_file\n\n");
     return myRead(fd, buf, nbytes);
 }
 
 int myRead(int fd, char *buf, int nbytes)
 {
-    printf("Entering myread\n");
+    printf("\nEntering myread\n");
 
     OFT *openTable;
     MINODE *mip;
@@ -86,6 +88,7 @@ int myRead(int fd, char *buf, int nbytes)
 
     // get minode from openTable
     mip = openTable->minodePtr;
+    ip = &mip->INODE;
 
     // get offset from openTable
     oftOffset = &openTable->offset;
@@ -107,7 +110,7 @@ int myRead(int fd, char *buf, int nbytes)
         {
             blk = mip->INODE.i_block[lbk]; // map LOGICAL lbk to PHYSICAL blk
         }
-        else if(lbk >= 12 && lbk < 256 + 12)
+        else if(12 <= lbk < 12 + 256)
         {
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
@@ -151,5 +154,6 @@ int myRead(int fd, char *buf, int nbytes)
     }
 
     printf("myRead: read %d char from file descriptor %d\n", count, fd);
+    printf("Exiting myRead\n\n");
     return count;
 }

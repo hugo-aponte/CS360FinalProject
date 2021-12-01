@@ -333,9 +333,12 @@ int getino(char *pathname)
 
 int myTruncate(MINODE *mip)
 {
+   printf("Entering truncate\n");
+   
    INODE *ip = &mip->INODE;
 
    // direct blocks
+   printf("truncate: entering for loop for direct block deallocation\n");
    for(int i = 0; i < 12; i++)
    {
       if(ip->i_block[i] != 0)
@@ -345,8 +348,10 @@ int myTruncate(MINODE *mip)
    }
 
    // indirect blocks
+   printf("truncate: entering if for indirect block deallocation\n");
    if(ip->i_block[12] != 0)
    {
+      printf("truncate: inside if\n");
       char buf[BLKSIZE];
       int blk;
       char *cp;
@@ -363,11 +368,14 @@ int myTruncate(MINODE *mip)
          }
          cp += 1;
       }
+      printf("truncate: exiting if\n");
    }
 
    // double indirect blocks
+   printf("truncate: entering if for double indirect blocks\n");
    if(ip->i_block[13])
    {
+      printf("truncate: inside if\n");
       char buf1[BLKSIZE];
       char buf2[BLKSIZE];
       int blk1, blk2;
@@ -397,12 +405,14 @@ int myTruncate(MINODE *mip)
          }
          cp1 += 1;
       }
+      printf("truncate: exiting if\n");
    }
 
    mip->INODE.i_atime = time(0L);
    mip->INODE.i_size = 0;
    mip->dirty = 1;
 
+   printf("Exiting truncate\n");
    return 0;
 }
 
@@ -471,7 +481,7 @@ int ls_dir(MINODE *mip, int dev)
 
    for (int i = 0; i < 12; i++)
    {
-      printf("iblock: %d\n", i);
+      // printf("iblock: %d\n", i);
       // check if direct block where our directories are is valid
       if (mip->INODE.i_block[i])
       {

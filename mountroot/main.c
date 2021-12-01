@@ -13,7 +13,7 @@ char gpath[128]; // global for tokenized components
 char *name[64];  // assume at most 64 components in pathname
 int n;           // number of component strings
 
-int fd, dev, *mode;
+int fd, dev, mode;
 int nblocks, ninodes, bmap, imap, iblk;
 char line[128], cmd[32], pathname[128], destination[128], position[10];
 
@@ -173,12 +173,15 @@ int main(int argc, char *argv[])
       printf("%d", myRmdir());
     else if (strcmp(cmd, "open") == 0)
     {
-      sscanf(line, "%s %s %d", cmd, pathname, mode);
-      printf("pathname=%s, mode=%d\n", pathname, *mode);
+      printf("inside if\n");
+      sscanf(line, "%s %s %d", cmd, pathname, &mode);
+      printf("pathname=%s, mode=%d\n", pathname, mode);
       open_file();
     }
     else if (strcmp(cmd, "close") == 0)
       close_file();
+    else if (strcmp(cmd, "pfd") == 0)
+      pfd();
     else if (strcmp(cmd, "lseek") == 0)
     {
       sscanf(line, "%s %s %s", cmd, pathname, position);

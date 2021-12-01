@@ -1,6 +1,6 @@
 #include "type.h"
 
-extern int *mode;
+extern int mode;
 
 extern MINODE minode[NMINODE];
 extern MINODE *root;
@@ -16,6 +16,8 @@ extern char line[128], cmd[32], pathname[128], position[10];
 
 int open_file()
 {
+    printf("\nEntering open\n");
+
     int ino;
     MINODE *mip;
     char filename[64];
@@ -28,14 +30,14 @@ int open_file()
     ino = getino(filename);
 
     // adjust dev based on pathname
-    if(pathname[0] == '/')
-    {
-        dev = root->dev;
-    }
-    else
-    {
-        dev = running->cwd->dev;
-    }
+    // if(pathname[0] == '/')
+    // {
+    //     dev = root->dev;
+    // }
+    // else
+    // {
+    //     dev = running->cwd->dev;
+    // }
     
     // check if ino == 0
     if(!ino)
@@ -67,33 +69,37 @@ int open_file()
     // allocate an openTable entry OFT; initialize OFT entries
     OFT *openTable = (OFT *)malloc(sizeof(OFT));
 
-    openTable->mode = *mode;
+    openTable->mode = mode;
     openTable->minodePtr = mip;
     openTable->refCount = 1;
+    printf("open: openTable instantiated\n");
 
     // check mode for offset
-    if(*mode == RD || *mode == RW)
+    printf("open: checking mode\n");
+    if(mode == RD || mode == RW)
     {
         openTable->offset = 0;
     }
-    else if(*mode == WR)
+    else if(mode == WR)
     {
         myTruncate(mip);
         openTable->offset = 0;
     }
-    else if(*mode == AP)
+    else if(mode == AP)
     {
         openTable->offset = mip->INODE.i_size;
     }
     else
     {
         // error case
-        printf("open: mode %d not recognized", *mode);
+        printf("open: mode %d not recognized", mode);
         return -1;
     }
+    printf("open: done checking mode\n");
 
     // find the index of the running process
     int index;
+    printf("open: finding index of the running process OFT fd array\n");
     for(index = 0; index < NFD; index++)
     {
         if(running->fd[index] == NULL)
@@ -104,21 +110,23 @@ int open_file()
     }
 
     // update the access time of the MINODE, lock it, and mark it dirty
-    if(*mode == RD)
+    if(mode == RD)
         mip->INODE.i_atime = time(0L);
     else
         mip->INODE.i_atime = mip->INODE.i_mtime = time(0L);
 
-    mip->lock = *mode;
+    mip->lock = 1;
     mip->dirty = 1;
 
     // return index of file descriptor
+    printf("%s opened for %d mode=%d fd=%d\n", filename, mode, mode, mode);
+    printf("Exiting open\n\n");
     return index;
 }
 
 int close_file()
 {
-    printf("Entering close\n");
+    printf("\nEntering close\n");
 
     // get fd from pathname
     int ino, fd = -1;
@@ -134,14 +142,14 @@ int close_file()
     ino = getino(filename);
 
     // adjust dev based on pathname
-    if(pathname[0] == '/')
-    {
-        dev = root->dev;
-    }
-    else
-    {
-        dev = running->cwd->dev;
-    }
+    // if(pathname[0] == '/')
+    // {
+    //     dev = root->dev;
+    // }
+    // else
+    // {
+    //     dev = running->cwd->dev;
+    // }
     
     mip = iget(dev, ino);
     
@@ -152,6 +160,7 @@ int close_file()
     }
 
     // look for file's fd
+    printf("close: entering for loop, looking for file's test descriptor\n");
     for(int i = 0; i < NFD; i++)
     {
         if(running->fd[i] != NULL)
@@ -162,6 +171,7 @@ int close_file()
             if(mip == oftmip)
             {
                 // found file at fd[i]
+                printf("close: found file descriptor %d", i);
                 fd = i;
                 break;
             }
@@ -178,6 +188,7 @@ int close_file()
     // verify openTable (running->fd[fd]) is pointing at OFT entry
     if(openTable != NULL)
     {
+        printf("close: setting file descriptor of running process's OFT array to NULL\n");
         running->fd[fd] = NULL;
 
         // decrement refcount
@@ -191,10 +202,11 @@ int close_file()
         }
         
         // no other oft references, dispose of oftmip
+        printf("disposing of oftmip\n");
         iput(oftmip);
     }
 
-    printf("Exiting close\n");
+    printf("Exiting close\n\n");
     return 0;
 }
 

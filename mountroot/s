@@ -6,5 +6,22 @@ sudo mount disk /mnt/
 # mkdir /mnt/d$i
 # done
 
+touch /mnt/file1
+touch /mnt/file2
+echo "123456789abcdefghijklmnop" > file1
+echo "" >> file1
+echo "" >> file1
+
+echo "this is file2" > file2
+echo "it has a few lines for testing read" >> file2
+echo "happ testing" >> file2
+echo "the end" >> file2
+echo "" >> file2
+echo "" >> file2
+
+echo "listing file1 and file2 contents"
+cat file1
+cat file2
+
 ls -a -i -l /mnt       # show . and .., inode number, long format
 sudo umount /mnt
