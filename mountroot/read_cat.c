@@ -21,7 +21,6 @@ int read_file()
     // return myread(fd, buf, nbytes)
 
     int ino, fd = -1, nbytes;
-    MINODE *mip;
     char *buf;
 
     // using pathname to extract file descriptor to read from
@@ -41,27 +40,15 @@ int read_file()
     }
 
     // get mip from file descriptor in pathname
-    ino = getino(pathname);
-    mip = iget(dev, ino);
+    fd = atoi(pathname);
     
     // get nbytes from destination var
     nbytes = atoi(destination);
 
-    for(int i = 0; i < NFD; i++)
-    {
-        // verify oft is not null, member minodePtr = mip, and mode aligns with our initial assumption (read or read/write)
-        // file to read found if true
-        if((running->fd[i] != NULL && running->fd[i]->minodePtr == mip) &&  (running->fd[i]->mode == 0 || running->fd[i]->mode == 2))
-        {
-            fd = i;
-            break;
-        }
-    }
-
     // verify that an opened file descriptor was found
-    if(fd < 0)
+    if(running->fd[fd] == NULL)
     {
-        printf("read_file: file %s not found\n", pathname);
+        printf("read_file: file descriptor %s not found\n", pathname);
         return -1;
     }
 
@@ -80,7 +67,7 @@ int myRead(int fd, char *buf, int nbytes)
     MINODE *mip;
     INODE *ip;
 
-    int count = 0, avail, lbk, blk, start, remain, *oftOffset;
+    int count = 0, avail, lbk, blk, start, remain;
     char *cq = buf, *cp, readBuf[BLKSIZE], indirect[256], doubleIndirect[256], temp[BLKSIZE];
 
     // get openTable from running process
@@ -90,18 +77,15 @@ int myRead(int fd, char *buf, int nbytes)
     mip = openTable->minodePtr;
     ip = &mip->INODE;
 
-    // get offset from openTable
-    oftOffset = &openTable->offset;
-
     // get available bytes from mip and oftOffset
-    avail = mip->INODE.i_size - *oftOffset;
+    avail = mip->INODE.i_size - openTable->offset;
 
     printf("Entering while loop | nbytes=%d, avail=%d\n", nbytes, avail);
     while(nbytes && avail)
     {
         // get lbk and start
-        lbk = *oftOffset / BLKSIZE;
-        start = *oftOffset % BLKSIZE;
+        lbk = openTable->offset / BLKSIZE;
+        start = openTable->offset % BLKSIZE;
 
         printf("lbk=%d, start=%d\n", lbk, start);
 
@@ -139,21 +123,23 @@ int myRead(int fd, char *buf, int nbytes)
         cp = readBuf + start;
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
-        printf("Entering inner while loop | cq=%d -> %s, cp=%d -> %s, remain=%d\n", *(int*)cq, cq, *(int*)cp, cp, remain);
+        printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         while(remain > 0)
         {
             *cq++ = *cp++;
-            *oftOffset++;
+            openTable->offset++;
             count++;
             avail--, nbytes--, remain--;
             
             if (nbytes <= 0 || avail <= 0)
                 break;
         }
+        printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if one data block is not enough, loop back to OUTER while for more 
     }
 
     printf("myRead: read %d char from file descriptor %d\n", count, fd);
+    printf("----------------------\n%s\n----------------------\n", buf);
     printf("Exiting myRead\n\n");
     return count;
 }

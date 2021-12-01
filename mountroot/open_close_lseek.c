@@ -129,37 +129,49 @@ int close_file()
     printf("\nEntering close\n");
 
     // get fd from pathname
-    int ino, fd = -1;
-    MINODE *mip, *oftmip;
-    char filename[64];
+    int fd = -1;
+    MINODE *mip;
     OFT *openTable;
 
-    // get name of file, separate from path
+    /*commented out close execution with a filename as parameter
+    instead we're going to follow the sample and close with file descriptor as parameter
+
+    get name of file, separate from path
     strcpy(filename, pathname);
     strcpy(filename, basename(filename));
 
-    // get inode number for file
+    get inode number for file
     ino = getino(filename);
 
-    // adjust dev based on pathname
-    // if(pathname[0] == '/')
-    // {
-    //     dev = root->dev;
-    // }
-    // else
-    // {
-    //     dev = running->cwd->dev;
-    // }
+    adjust dev based on pathname
+    if(pathname[0] == '/')
+    {
+        dev = root->dev;
+    }
+    else
+    {
+        dev = running->cwd->dev;
+    }
     
-    mip = iget(dev, ino);
+    mip = iget(dev, ino); */
+    
+    // get fd and mip from given file descriptor in pathname variable
+    // name might be misleading
+    fd = atoi(pathname);
+    openTable = running->fd[fd];
+    mip = openTable->minodePtr;
     
     if(!mip)
     {
-        printf("close: file %s not found\n", filename);
+        printf("close: file descriptor %s not found\n", pathname);
         return -1;
     }
 
-    // look for file's fd
+    /* 
+    commented out close execution with a filename as parameter
+    instead we're going to follow the sample and close with file descriptor as parameter
+
+    look for file's fd
     printf("close: entering for loop, looking for file's test descriptor\n");
     for(int i = 0; i < NFD; i++)
     {
@@ -177,13 +189,7 @@ int close_file()
             }
         }
     }
-
-    // verify fd
-    if(fd < 0)
-    {
-        printf("close: file %s not found in OFT\n", filename);
-        return -1;
-    }
+    */
 
     // verify openTable (running->fd[fd]) is pointing at OFT entry
     if(openTable != NULL)
@@ -201,9 +207,9 @@ int close_file()
             return 0;
         }
         
-        // no other oft references, dispose of oftmip
-        printf("disposing of oftmip\n");
-        iput(oftmip);
+        // no other oft references, dispose of mip
+        printf("disposing of mip\n");
+        iput(mip);
     }
 
     printf("Exiting close\n\n");
