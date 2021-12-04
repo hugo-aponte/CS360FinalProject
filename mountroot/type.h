@@ -47,11 +47,12 @@ typedef struct minode
   int refCount; // in use count
   int dirty;    // 0 for clean, 1 for modified
   int lock;
-  int mounted;          // for level-3
+  int mounted; // for level-3
   // struct mntable *mptr; // for level-3
 } MINODE;
 
-typedef struct oft{
+typedef struct oft
+{
   int mode;
   int refCount;
   int offset;
@@ -151,6 +152,10 @@ int dup2(int fd, int gd);
 int read_file();
 int myRead(int fd, char *buf, int nbytes);
 int myCat();
+
+// write_cp
+int write_file();
+int mywrite(int fd, char buf[], int nbytes);
 
 // misc
 int myStat(int dev, char *pathname);

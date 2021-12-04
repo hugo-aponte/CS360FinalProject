@@ -67,7 +67,7 @@ int quit()
   exit(0);
 }
 
-char *disk = "disk";
+char *disk = "disk2";
 int main(int argc, char *argv[])
 {
   int ino;
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
   // P1 created as user process
   running = &proc[1];
   running->cwd = root;
- 
+
   // char temp[128];
   // strcpy(temp, "d");
 
@@ -196,8 +196,29 @@ int main(int argc, char *argv[])
       printf("pathname=%s, destination(nbytes)=%s\n", pathname, destination);
       read_file();
     }
+    else if (strcmp(cmd, "write") == 0)
+    {
+      char fd[10];
+      int writeposition = 0;
+      int readposition;
+      int linelen = strlen(line);
+      char writebuf[128];
+
+      sscanf(line, "%s %s", cmd, fd);
+      readposition = strlen(cmd) + strlen(fd) + 2;
+
+      while (readposition < linelen)
+      {
+        writebuf[writeposition++] = line[readposition++];
+      }
+
+      printf("fd=%s, nbytes=%zu\n", fd, strlen(writebuf));
+      write_file(atoi(fd), writebuf);
+    }
     else if (strcmp(cmd, "cat") == 0)
       myCat();
+    else if (strcmp(cmd, "clear") == 0)
+      printf("\033[2J\033[1;1H");
     // else if write
   }
 }

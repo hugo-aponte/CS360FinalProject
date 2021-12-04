@@ -24,8 +24,8 @@ int read_file()
     char *buf;
 
     // using pathname to extract file descriptor to read from
-    // name might be misleading 
-    if(pathname[0] == 0)
+    // name might be misleading
+    if (pathname[0] == 0)
     {
         printf("read_file: file descriptor is null\n");
         return -1;
@@ -33,7 +33,7 @@ int read_file()
 
     // using destination to extract nbytes to read
     // name might be misleading
-    if(destination[0] == 0)
+    if (destination[0] == 0)
     {
         printf("read_file: nbytes is null\n");
         return -1;
@@ -41,19 +41,19 @@ int read_file()
 
     // get mip from file descriptor in pathname
     fd = atoi(pathname);
-    
+
     // get nbytes from destination var
     nbytes = atoi(destination);
 
     // verify that an opened file descriptor was found
-    if(running->fd[fd] == NULL)
+    if (running->fd[fd] == NULL)
     {
         printf("read_file: file descriptor %s not found\n", pathname);
         return -1;
     }
 
     // allocate nbytes in buf
-    buf = (char*)malloc(nbytes);
+    buf = (char *)malloc(nbytes);
 
     printf("Exiting read_file\n\n");
     return myRead(fd, buf, nbytes);
@@ -81,7 +81,7 @@ int myRead(int fd, char *buf, int nbytes)
     avail = mip->INODE.i_size - openTable->offset;
 
     // printf("Entering while loop | nbytes=%d, avail=%d\n", nbytes, avail);
-    while(nbytes && avail)
+    while (nbytes && avail)
     {
         // get lbk and start
         lbk = openTable->offset / BLKSIZE;
@@ -90,29 +90,29 @@ int myRead(int fd, char *buf, int nbytes)
         // printf("lbk=%d, start=%d\n", lbk, start);
 
         // check lbk for direct, indirect, and double indirect
-        if(lbk < 12)
+        if (lbk < 12)
         {
             blk = mip->INODE.i_block[lbk]; // map LOGICAL lbk to PHYSICAL blk
         }
-        else if(12 <= lbk < 12 + 256)
+        else if (12 <= lbk < 12 + 256)
         {
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
-            blk = indirect[lbk-12];
+            blk = indirect[lbk - 12];
         }
         else
         {
             // double indirect blocks
             get_block(mip->dev, ip->i_block[13], indirect);
-            get_block(mip->dev, indirect[lbk-(256+12)/256], doubleIndirect);
-            blk = doubleIndirect[(lbk-(256+12)%256)];
+            get_block(mip->dev, indirect[lbk - (256 + 12) / 256], doubleIndirect);
+            blk = doubleIndirect[(lbk - (256 + 12) % 256)];
         }
 
         // get the data block into readBuf[BLKSIZE]
         get_block(mip->dev, blk, readBuf);
 
         // check if file is empty
-        if(readBuf[0] == 0)
+        if (readBuf[0] == 0)
         {
             printf("read: file is empty\n");
             put_block(mip->dev, blk, readBuf);
@@ -124,18 +124,18 @@ int myRead(int fd, char *buf, int nbytes)
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
         // printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
-        while(remain > 0)
+        while (remain > 0)
         {
             *cq++ = *cp++;
             openTable->offset++;
             count++;
             avail--, nbytes--, remain--;
-            
+
             if (nbytes <= 0 || avail <= 0)
                 break;
         }
         // printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
-        // if one data block is not enough, loop back to OUTER while for more 
+        // if one data block is not enough, loop back to OUTER while for more
     }
 
     // printf("myRead: read %d char from file descriptor %d\n", count, fd);
@@ -147,7 +147,7 @@ int myRead(int fd, char *buf, int nbytes)
 int myCat()
 {
     // printf("\nEntering myCat\n");
-    
+
     char mybuf[1024] = "\0", dummy = 0;
     int n, fd;
     mode = RD;
@@ -158,20 +158,20 @@ int myCat()
     fd = open_file();
 
     // check if file exists
-    if(fd < 0)
+    if (fd < 0)
     {
         printf("cat: %s does not exist or fd=%d invalid\n", pathname, fd);
         return -1;
     }
 
     // printf("cat: entering while loop\n");
-    while(n = myRead(fd, mybuf, 1024))
+    while (n = myRead(fd, mybuf, 1024))
     {
         // make sure not to go out of bounds in case of error
-        if(n <= 0)
+        if (n <= 0)
             break;
 
-        mybuf[n] = 0; // as a null terminated string
+        mybuf[n] = 0;                                                                           // as a null terminated string
         printf("\n%s:\n----------------------\n%s\n----------------------\n", pathname, mybuf); // this works but not good
 
         // spit out chars from mybuf[] but handle \n properly
