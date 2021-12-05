@@ -68,7 +68,7 @@ int myRead(int fd, char *buf, int nbytes)
     INODE *ip;
 
     int count = 0, avail, lbk, blk, start, remain;
-    char *cq = buf, *cp, readBuf[BLKSIZE], indirect[256], doubleIndirect[256], temp[BLKSIZE];
+    char *cq = buf, *cp, readBuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE], temp[BLKSIZE];
 
     // get openTable from running process
     openTable = running->fd[fd];
@@ -94,18 +94,19 @@ int myRead(int fd, char *buf, int nbytes)
         {
             blk = mip->INODE.i_block[lbk]; // map LOGICAL lbk to PHYSICAL blk
         }
-        else if (12 <= lbk < 12 + 256)
+        else if (lbk >= 12 && lbk < (256 + 12))
         {
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
-            blk = indirect[lbk - 12];
+            memcpy(&blk, &indirect[(lbk * 4) - 12], sizeof(int));
+            //blk = indirect[(lbk * 4) - 12];
         }
         else
         {
             // double indirect blocks
             get_block(mip->dev, ip->i_block[13], indirect);
-            get_block(mip->dev, indirect[lbk - (256 + 12) / 256], doubleIndirect);
-            blk = doubleIndirect[(lbk - (256 + 12) % 256)];
+            get_block(mip->dev, indirect[(lbk * 4) - (256 + 12) / 256], doubleIndirect);
+            blk = doubleIndirect[((lbk * 4) - (256 + 12) % 256)];
         }
 
         // get the data block into readBuf[BLKSIZE]
@@ -148,7 +149,7 @@ int myCat()
 {
     // printf("\nEntering myCat\n");
 
-    char mybuf[1024] = "\0", dummy = 0;
+    char mybuf[BLKSIZE] = "\0", dummy = 0;
     int n, fd;
     mode = RD;
 
@@ -165,7 +166,7 @@ int myCat()
     }
 
     // printf("cat: entering while loop\n");
-    while (n = myRead(fd, mybuf, 1024))
+    while (n = myRead(fd, mybuf, BLKSIZE))
     {
         // make sure not to go out of bounds in case of error
         if (n <= 0)

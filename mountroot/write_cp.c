@@ -26,7 +26,6 @@ int write_file(int fd, char *writebuf)
 
 int mywrite(int fd, char buf[], int nbytes)
 {
-    printf("Entering mywrite\n");
 
     OFT *oftp;
     MINODE *mip;
@@ -48,8 +47,6 @@ int mywrite(int fd, char buf[], int nbytes)
 
     // get available bytes from mip and offset
     avail = mip->INODE.i_size - *offset;
-
-    printf("Entering whileloop\n");
     while (nbytes > 0)
     {
         //compute LOGICAL BLOCK (lbk) and the startByte in that lbk:
@@ -59,6 +56,7 @@ int mywrite(int fd, char buf[], int nbytes)
 
         // I only show how to write DIRECT data blocks, you figure out how to
         // write indirect and double-indirect blocks.
+        printf("\nlbk %d\n", lbk);
         if (lbk < 12)
         { // direct block
             if (ip->i_block[lbk] == 0)
@@ -68,34 +66,28 @@ int mywrite(int fd, char buf[], int nbytes)
             }
             blk = mip->INODE.i_block[lbk]; // blk should be a disk block now
         }
-        else if (lbk >= 12 && lbk < 256 + 12)
+        else if (lbk >= 12 && lbk < (256 + 12))
         { // INDIRECT blocks
+            printf("\n\nindirect blocks\n\n");
             // HELP INFO:
             if (ip->i_block[12] == 0)
             {
-                //   allocate a block for it;
-                //   zero out the block on disk !!!!
-                blk = balloc(mip->dev);
-                ip->i_block[12] = blk;
-                get_block(mip->dev, blk, indirect);
-                bzero(indirect, BLKSIZE);
-                put_block(mip->dev, blk, indirect);
-                //iput(mip);
-                //testing for contents of i_blok[12]
+                ip->i_block[12] = balloc(mip->dev);
                 get_block(mip->dev, ip->i_block[12], indirect);
-                for (int i = 0; i < BLKSIZE; i++)
-                    printf("iblock 12: %d\n", indirect[i]);
+                bzero(indirect, BLKSIZE);
+                put_block(mip->dev, ip->i_block[12], indirect);
             }
             // get i_block[12] into an int ibuf[256];
             get_block(mip->dev, ip->i_block[12], ibuf);
-            // if (blk == 0)
-            // {
-            // allocate a disk block;
-            // record it in i_block[12];
-            blk = balloc(mip->dev);
-            ibuf[lbk - 12] = blk;
-            put_block(mip->dev, ip->i_block[12], ibuf);
-            //}
+            memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
+            if (blk == 0)
+            {
+                // allocate a disk block;
+                // record it in i_block[12];
+                blk = balloc(mip->dev);
+                memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
+                put_block(mip->dev, ip->i_block[12], ibuf);
+            }
         }
         // else
         // {
@@ -130,9 +122,9 @@ int mywrite(int fd, char buf[], int nbytes)
 
 int myCp(char *f1, char *f2)
 {
-    char mybuf[1024] = "\0", dummy = 0;
-    char *sender;
-    int n, fd1, fd2;
+    char mybuf[BLKSIZE] = "\0", dummy = 0, *sender, filename[128];
+    int n, fd1, fd2, ino;
+    MINODE *mip;
     mode = RD;
 
     // calling open_file, expect to return fd index
@@ -148,6 +140,13 @@ int myCp(char *f1, char *f2)
         return -1;
     }
     strcpy(pathname, f2);
+    strcpy(filename, pathname);
+    strcpy(filename, basename(filename));
+    ino = getino(filename);
+    mip = iget(dev, ino);
+
+    myTruncate(mip);
+
     fd2 = open_file();
     // check if file exists
     if (fd2 < 0)
@@ -157,7 +156,7 @@ int myCp(char *f1, char *f2)
     }
 
     // printf("cat: entering while loop\n");
-    while (n = myRead(fd1, mybuf, 1024))
+    while (n = myRead(fd1, mybuf, BLKSIZE))
     {
         // make sure not to go out of bounds in case of error
         if (n <= 0)
