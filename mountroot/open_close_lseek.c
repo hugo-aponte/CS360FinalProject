@@ -20,7 +20,7 @@ int open_file()
 
     int ino;
     MINODE *mip;
-    char filename[64];
+    char filename[128];
 
     // get name of file, separate from path
     strcpy(filename, pathname);
@@ -38,9 +38,9 @@ int open_file()
     // {
     //     dev = running->cwd->dev;
     // }
-    
+
     // check if ino == 0
-    if(!ino)
+    if (!ino)
     {
         // creat filename if it doesnt exist
         myCreat(filename);
@@ -53,14 +53,14 @@ int open_file()
     mip = iget(dev, ino);
 
     // check if minode is already open
-    if(mip->lock)
+    if (mip->lock)
     {
         printf("open: pathname %s is already open\n", pathname);
         return -1;
     }
 
     // check if minode is a file
-    if(!S_ISREG(mip->INODE.i_mode))
+    if (!S_ISREG(mip->INODE.i_mode))
     {
         printf("open: pathname %s is not a file\n", pathname);
         return -1;
@@ -76,16 +76,16 @@ int open_file()
 
     // check mode for offset
     // printf("open: checking mode\n");
-    if(mode == RD || mode == RW)
+    if (mode == RD || mode == RW)
     {
         openTable->offset = 0;
     }
-    else if(mode == WR)
+    else if (mode == WR)
     {
         myTruncate(mip);
         openTable->offset = 0;
     }
-    else if(mode == AP)
+    else if (mode == AP)
     {
         openTable->offset = mip->INODE.i_size;
     }
@@ -100,9 +100,9 @@ int open_file()
     // find the index of the running process
     int index;
     // printf("open: finding index of the running process OFT fd array\n");
-    for(index = 0; index < NFD; index++)
+    for (index = 0; index < NFD; index++)
     {
-        if(running->fd[index] == NULL)
+        if (running->fd[index] == NULL)
         {
             running->fd[index] = openTable;
             break;
@@ -110,7 +110,7 @@ int open_file()
     }
 
     // update the access time of the MINODE, lock it, and mark it dirty
-    if(mode == RD)
+    if (mode == RD)
         mip->INODE.i_atime = time(0L);
     else
         mip->INODE.i_atime = mip->INODE.i_mtime = time(0L);
@@ -153,13 +153,13 @@ int close_file(int fd)
     }
     
     mip = iget(dev, ino); */
-    
+
     // get fd and mip from given file descriptor
     // name might be misleading
     openTable = running->fd[fd];
     mip = openTable->minodePtr;
-    
-    if(!mip)
+
+    if (!mip)
     {
         printf("close: file descriptor %s not found\n", pathname);
         return -1;
@@ -190,7 +190,7 @@ int close_file(int fd)
     */
 
     // verify openTable (running->fd[fd]) is pointing at OFT entry
-    if(openTable != NULL)
+    if (openTable != NULL)
     {
         // printf("close: setting file descriptor of running process's OFT array to NULL\n");
         running->fd[fd] = NULL;
@@ -199,12 +199,12 @@ int close_file(int fd)
         openTable->refCount--;
 
         // verify file is not being referenced
-        if(openTable->refCount > 0)
+        if (openTable->refCount > 0)
         {
             printf("close: refcount %d\n", openTable->refCount);
             return 0;
         }
-        
+
         // no other oft references, dispose of mip
         // printf("close: disposing of mip\n");
         mip->lock = 0;
@@ -222,13 +222,13 @@ int myLseek()
     OFT *openTable;
 
     // check pathname and position
-    if(pathname[0] == 0)
+    if (pathname[0] == 0)
     {
         printf("lseek: pathname is null\n");
         return -1;
     }
 
-    if(position[0] == 0)
+    if (position[0] == 0)
     {
         printf("lseek: position is null\n");
         return -1;
@@ -238,14 +238,14 @@ int myLseek()
     mip = iget(dev, ino);
 
     // extract file descriptor
-    for(int i = 0; i < NFD; i++)
+    for (int i = 0; i < NFD; i++)
     {
-        if(running->fd[i] != NULL)
+        if (running->fd[i] != NULL)
         {
             openTable = running->fd[i];
 
             // verify file in openTable
-            if(openTable->minodePtr == mip)
+            if (openTable->minodePtr == mip)
             {
                 fd = i;
                 break;
@@ -256,21 +256,21 @@ int myLseek()
     pos = atoi(position);
 
     // use extracted file descriptor and given position for lseek
-    if(!fd)
+    if (!fd)
     {
         printf("lseek: fd is null\n");
         return -1;
     }
 
     // verify an openTable was found
-    if(openTable == NULL)
+    if (openTable == NULL)
     {
         printf("lseek: openTable is null\n");
         return -1;
     }
 
     // verify openTable refCount is > 0
-    if(openTable->refCount < 0)
+    if (openTable->refCount < 0)
     {
         printf("lseek: openTable refcount is < 0\n");
         return -1;
@@ -279,11 +279,12 @@ int myLseek()
     // change OFT entry's offset to position but make sure NOT to over run either end of the file
     originalPos = openTable->offset;
 
-    if(pos <= openTable->minodePtr->INODE.i_size)
+    if (pos <= openTable->minodePtr->INODE.i_size)
     {
         openTable->offset = pos;
     }
-    else{
+    else
+    {
         printf("lseek: out of boundary exception\n");
         return -1;
     }
@@ -300,11 +301,11 @@ int pfd()
     printf("fd\tmode\toffset\tINODE\n");
     printf("----\t----\t------\t--------\n");
 
-    for(int i = 0; i < NFD; i++)
+    for (int i = 0; i < NFD; i++)
     {
-        // check every openTable in running process 
+        // check every openTable in running process
         // if open, it should not be NULL
-        if(running->fd[i] != NULL)
+        if (running->fd[i] != NULL)
         {
             openTable = running->fd[i];
             mip = openTable->minodePtr;
@@ -319,13 +320,13 @@ int pfd()
 int dup(int fd)
 {
     // verify fd is an opened descriptor
-    if(fd >= 0 && fd < NFD && running->fd[fd] != NULL)
+    if (fd >= 0 && fd < NFD && running->fd[fd] != NULL)
     {
         // openTable is accessible
-        for(int i = 0; i < NFD; i++)
+        for (int i = 0; i < NFD; i++)
         {
             // look for the next NULL OFT
-            if(running->fd[i] == NULL)
+            if (running->fd[i] == NULL)
             {
                 // duplicate openTable at given fd to next NULL OFT
                 running->fd[i] = running->fd[fd];
@@ -342,7 +343,7 @@ int dup(int fd)
 int dup2(int fd, int gd)
 {
     // close gd if it is open
-    if(running->fd[gd] != NULL)
+    if (running->fd[gd] != NULL)
     {
         close_file(gd);
     }

@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
       int writeposition = 0;
       int readposition;
       int linelen = strlen(line);
-      char writebuf[128];
+      char writebuf[50000];
 
       sscanf(line, "%s %s", cmd, fd);
       readposition = strlen(cmd) + strlen(fd) + 2;
@@ -217,8 +217,17 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(cmd, "cat") == 0)
       myCat();
+    else if (strcmp(cmd, "cp") == 0)
+    {
+      char cmd[128];
+      char f1[128];
+      char f2[128];
+
+      sscanf(line, "%s %s %s", cmd, f1, f2);
+      // printf("f1 = %s f2 = %s", f1, f2);
+      myCp(f1, f2);
+    }
     else if (strcmp(cmd, "clear") == 0)
       printf("\033[2J\033[1;1H");
-    // else if write
   }
 }

@@ -156,6 +156,7 @@ int myCat();
 // write_cp
 int write_file();
 int mywrite(int fd, char buf[], int nbytes);
+int myCp(char *f1, char *f2);
 
 // misc
 int myStat(int dev, char *pathname);

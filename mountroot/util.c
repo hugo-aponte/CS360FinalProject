@@ -236,9 +236,9 @@ int iput(MINODE *mip)
       return 0;     // SUS origionally returned nothing, but was giving error
    mip->refCount--; // dec refCount by 1
    if (mip->refCount > 0)
-      return 0; // still has user SUS origionally returned nothing, but was giving error
+      return 0; // still has user -- SUS origionally returned nothing, but was giving error
    if (mip->dirty == 0)
-      return 0; // no need to write back SUS origionally returned nothing, but was giving error
+      return 0; // no need to write back -- SUS origionally returned nothing, but was giving error
    // write INODE back to disk
    block = (mip->ino - 1) / 8 + iblk;
    offset = (mip->ino - 1) % 8;
@@ -334,14 +334,14 @@ int getino(char *pathname)
 int myTruncate(MINODE *mip)
 {
    printf("Entering truncate\n");
-   
+
    INODE *ip = &mip->INODE;
 
    // direct blocks
    printf("truncate: entering for loop for direct block deallocation\n");
-   for(int i = 0; i < 12; i++)
+   for (int i = 0; i < 12; i++)
    {
-      if(ip->i_block[i] != 0)
+      if (ip->i_block[i] != 0)
       {
          bdalloc(dev, ip->i_block[i]);
       }
@@ -349,7 +349,7 @@ int myTruncate(MINODE *mip)
 
    // indirect blocks
    printf("truncate: entering if for indirect block deallocation\n");
-   if(ip->i_block[12] != 0)
+   if (ip->i_block[12] != 0)
    {
       printf("truncate: inside if\n");
       char buf[BLKSIZE];
@@ -358,11 +358,11 @@ int myTruncate(MINODE *mip)
       get_block(dev, ip->i_block[12], buf);
       cp = buf;
 
-      while(cp < &buf[BLKSIZE])
+      while (cp < &buf[BLKSIZE])
       {
          blk = *cp;
-         
-         if(blk)
+
+         if (blk)
          {
             bdalloc(dev, blk);
          }
@@ -373,7 +373,7 @@ int myTruncate(MINODE *mip)
 
    // double indirect blocks
    printf("truncate: entering if for double indirect blocks\n");
-   if(ip->i_block[13])
+   if (ip->i_block[13])
    {
       printf("truncate: inside if\n");
       char buf1[BLKSIZE];
@@ -383,25 +383,25 @@ int myTruncate(MINODE *mip)
 
       get_block(dev, ip->i_block[13], buf1);
       cp1 = buf1;
-      while(cp1 < &buf1[BLKSIZE])
+      while (cp1 < &buf1[BLKSIZE])
       {
          blk1 = *cp1;
-         if(!blk1)
+         if (!blk1)
          {
             break;
          }
-         
+
          get_block(dev, blk1, buf2);
          cp2 = buf2;
-         while(cp2 < &buf2[BLKSIZE])
+         while (cp2 < &buf2[BLKSIZE])
          {
             blk2 = *cp2;
 
-               if(blk2)
-               {
-                  bdalloc(dev, blk2);
-               }
-               cp2 += 1;
+            if (blk2)
+            {
+               bdalloc(dev, blk2);
+            }
+            cp2 += 1;
          }
          cp1 += 1;
       }
@@ -415,7 +415,6 @@ int myTruncate(MINODE *mip)
    printf("Exiting truncate\n");
    return 0;
 }
-
 
 int findparent(char *pathname)
 {

@@ -7,6 +7,7 @@ extern PROC proc[NPROC], *running;
 extern char gpath[128]; // global for tokenized components
 extern char *name[64];  // assume at most 64 components in pathname
 extern int n;           // number of component strings
+extern int mode;
 
 extern int dev;
 extern int nblocks, ninodes, bmap, imap, iblk;
@@ -31,8 +32,9 @@ int mywrite(int fd, char buf[], int nbytes)
     MINODE *mip;
     INODE *ip;
 
-    int count = 0, avail, lbk, blk, start, remain, *offset;
-    char *cq = buf, *cp, wbuf[BLKSIZE], indirect[256], doubleIndirect[256], temp[BLKSIZE];
+    int count = 0, avail, lbk, blk, iblk, start, remain, *offset;
+    char *cq = buf, *cp, wbuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE];
+    char ibuf[BLKSIZE];
 
     // get oftp from running process
     oftp = running->fd[fd];
@@ -73,20 +75,27 @@ int mywrite(int fd, char buf[], int nbytes)
             {
                 //   allocate a block for it;
                 //   zero out the block on disk !!!!
-                get_block(mip->dev, ip->i_block[12], indirect);
-                blk = indirect[lbk - 12];
                 blk = balloc(mip->dev);
-                get_block(mip->dev, blk, temp);
-                bzero(temp, BLKSIZE);
-                put_block(mip->dev, blk, temp);
+                ip->i_block[12] = blk;
+                get_block(mip->dev, blk, indirect);
+                bzero(indirect, BLKSIZE);
+                put_block(mip->dev, blk, indirect);
+                //iput(mip);
+                //testing for contents of i_blok[12]
+                get_block(mip->dev, ip->i_block[12], indirect);
+                for (int i = 0; i < BLKSIZE; i++)
+                    printf("iblock 12: %d\n", indirect[i]);
             }
             // get i_block[12] into an int ibuf[256];
-            // blk = ibuf[lbk - 12];
+            get_block(mip->dev, ip->i_block[12], ibuf);
             // if (blk == 0)
             // {
-            //     // allocate a disk block;
-            //     // record it in i_block[12];
-            // }
+            // allocate a disk block;
+            // record it in i_block[12];
+            blk = balloc(mip->dev);
+            ibuf[lbk - 12] = blk;
+            put_block(mip->dev, ip->i_block[12], ibuf);
+            //}
         }
         // else
         // {
@@ -117,4 +126,54 @@ int mywrite(int fd, char buf[], int nbytes)
     mip->dirty = 1; // mark mip dirty for iput()
     printf("wrote %d char into file descriptor fd=%d\n", nbytes, fd);
     return nbytes;
+}
+
+int myCp(char *f1, char *f2)
+{
+    char mybuf[1024] = "\0", dummy = 0;
+    char *sender;
+    int n, fd1, fd2;
+    mode = RD;
+
+    // calling open_file, expect to return fd index
+    // assuming: main.c should have set global pathname to the entered filename (open_file uses global pathname and mode)
+    // we manually set the global mode to RD
+
+    strcpy(pathname, f1);
+    fd1 = open_file();
+    // check if file exists
+    if (fd1 < 0)
+    {
+        printf("cp: %s does not exist or fd=%d invalid\n", pathname, fd2);
+        return -1;
+    }
+    strcpy(pathname, f2);
+    fd2 = open_file();
+    // check if file exists
+    if (fd2 < 0)
+    {
+        printf("cp: %s does not exist or fd=%d invalid\n", pathname, fd2);
+        return -1;
+    }
+
+    // printf("cat: entering while loop\n");
+    while (n = myRead(fd1, mybuf, 1024))
+    {
+        // make sure not to go out of bounds in case of error
+        if (n <= 0)
+            break;
+
+        mybuf[n] = 0;           // as a null terminated string
+        mywrite(fd2, mybuf, n); // this works but not good
+
+        // spit out chars from mybuf[] but handle \n properly
+    }
+    // printf("cat: exiting while loop\n");
+
+    // close given file descriptor
+    close_file(fd1);
+    close_file(fd2);
+
+    // printf("Exiting myCat\n\n");
+    return 0;
 }

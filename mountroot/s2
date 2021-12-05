@@ -1,4 +1,5 @@
 #!/bin/bash
+./restorDisk2
 sudo mount disk2 /mnt/
 
 ls -a -i -l /mnt # show . and .., inode number, long format
