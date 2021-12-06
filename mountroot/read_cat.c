@@ -69,7 +69,6 @@ int myRead(int fd, char *buf, int nbytes)
 
     int count = 0, avail, lbk, blk, start, remain, optimize;
     char *cq = buf, *cp, readBuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE], temp[BLKSIZE];
-    int ibuf[256], ibuf2[256];
 
     // get openTable from running process
     openTable = running->fd[fd];
@@ -97,6 +96,7 @@ int myRead(int fd, char *buf, int nbytes)
         }
         else if (lbk >= 12 && lbk < (256 + 12))
         {
+            int ibuf[256];
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
             memcpy(&ibuf, &indirect, BLKSIZE);
@@ -104,6 +104,7 @@ int myRead(int fd, char *buf, int nbytes)
         }
         else
         {
+            int ibuf[256], ibuf2[256];
             // double indirect blocks
             get_block(mip->dev, ip->i_block[13], indirect);
             memcpy(&ibuf, &indirect, BLKSIZE);
