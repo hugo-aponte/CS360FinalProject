@@ -14,7 +14,7 @@ extern char line[128], cmd[32], pathname[128], destination[128];
 
 int read_file()
 {
-    printf("\nEntering read_file\n");
+    // printf("\nEntering read_file\n");
     // ASSUME: File is opened for RD or RW;
     // ask for a fd and nbytes to read;
     // verify that fd is indeed opened for RD or RW;
@@ -55,7 +55,7 @@ int read_file()
     // allocate nbytes in buf
     buf = (char *)malloc(nbytes);
 
-    printf("Exiting read_file\n\n");
+    // printf("Exiting read_file\n\n");
     return myRead(fd, buf, nbytes);
 }
 
@@ -98,15 +98,15 @@ int myRead(int fd, char *buf, int nbytes)
         {
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
-            memcpy(&blk, &indirect[(lbk * 4) - 12], sizeof(int));
+            memcpy(&blk, &indirect[(lbk - 12) * 4], sizeof(int));
             //blk = indirect[(lbk * 4) - 12];
         }
         else
         {
             // double indirect blocks
             get_block(mip->dev, ip->i_block[13], indirect);
-            get_block(mip->dev, indirect[(lbk * 4) - (256 + 12) / 256], doubleIndirect);
-            blk = doubleIndirect[((lbk * 4) - (256 + 12) % 256)];
+            get_block(mip->dev, indirect[((lbk - (256 + 12)) * 4) / BLKSIZE], doubleIndirect);
+            memcpy(&blk, &doubleIndirect[((lbk - (256 + 12)) * 4) % BLKSIZE], sizeof(int));
         }
 
         // get the data block into readBuf[BLKSIZE]
@@ -125,39 +125,44 @@ int myRead(int fd, char *buf, int nbytes)
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
         // printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
-        if (remain > 0 && ((nbytes - remain) >= 0 || (avail - remain) >= 0))
-        {
-            memcpy(cp, cp, remain);
-            memcpy(cq, cp, remain);
-            // *cp += remain;
-            // *cq = *cp;
-            openTable->offset += remain;
-            count += remain;
-            avail -= remain;
-            nbytes -= remain;
-            remain = 0;
-        }
+        // if (remain > 0)
+        // {
+        //     if (((nbytes - remain) >= 0 || (avail - remain) >= 0))
+        //     {
+        //         memcpy(cp, cp, remain);
+        //         memcpy(cq, cp, remain);
+        //         // *cp += remain;
+        //         // *cq = *cp;
+        //         openTable->offset += remain;
+        //         count += remain;
+        //         avail -= remain;
+        //         nbytes -= remain;
+        //         remain = 0;
+        //     }
+        //     else
+        //     {
+        //         // memcpy(cp, cp, avail);
+        //         // memcpy(cq, cp, avail);
+        //         // openTable->offset += avail;
+        //         // count += avail;
+        //         // avail -= avail;
+        //         // nbytes -= avail;
+        //         // remain = remain - avail;
+        //     }
+        // }
         // else
-        // {
-        //     cq += avail;
-        //     cp += avail;
-        //     openTable->offset += avail;
-        //     count += avail;
-        //     avail -= avail;
-        //     nbytes -= avail;
-        //     remain = 0;
-        // }
-        // while (remain > 0)
-        // {
-        //     *cq++ = *cp++;
-        //     openTable->offset++;
-        //     count++;
-        //     avail--, nbytes--, remain--;
+        //     break;
+        while (remain > 0)
+        {
+            *cq++ = *cp++;
+            openTable->offset++;
+            count++;
+            avail--, nbytes--, remain--;
 
-        //     if (nbytes <= 0 || avail <= 0)
-        //         break;
-        // }
-        // printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
+            if (nbytes <= 0 || avail <= 0)
+                break;
+        }
+        //printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if one data block is not enough, loop back to OUTER while for more
     }
 
@@ -194,8 +199,8 @@ int myCat()
         if (n <= 0)
             break;
 
-        mybuf[n] = 0;                                                                           // as a null terminated string
-        printf("\n%s:\n----------------------\n%s\n----------------------\n", pathname, mybuf); // this works but not good
+        mybuf[n] = 0;        // as a null terminated string
+        printf("%s", mybuf); // this works but not good
 
         // spit out chars from mybuf[] but handle \n properly
     }
