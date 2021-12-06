@@ -79,15 +79,15 @@ int mywrite(int fd, char buf[], int nbytes)
             }
             // get i_block[12] into an int ibuf[256];
             get_block(mip->dev, ip->i_block[12], ibuf);
-            memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
+            memcpy(&blk, &ibuf[(lbk - 12) * 4], sizeof(int));
             if (blk == 0)
             {
                 // allocate a disk block;
                 // record it in i_block[12];
                 blk = balloc(mip->dev);
-                memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
-                put_block(mip->dev, ip->i_block[12], ibuf);
+                // memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
             }
+            put_block(mip->dev, ip->i_block[12], ibuf);
         }
         // else
         // {
@@ -145,7 +145,7 @@ int myCp(char *f1, char *f2)
     ino = getino(filename);
     mip = iget(dev, ino);
 
-    myTruncate(mip);
+    // myTruncate(mip);
 
     fd2 = open_file();
     // check if file exists

@@ -125,16 +125,38 @@ int myRead(int fd, char *buf, int nbytes)
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
         // printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
-        while (remain > 0)
+        if (remain > 0 && ((nbytes - remain) >= 0 || (avail - remain) >= 0))
         {
-            *cq++ = *cp++;
-            openTable->offset++;
-            count++;
-            avail--, nbytes--, remain--;
-
-            if (nbytes <= 0 || avail <= 0)
-                break;
+            memcpy(cp, cp, remain);
+            memcpy(cq, cp, remain);
+            // *cp += remain;
+            // *cq = *cp;
+            openTable->offset += remain;
+            count += remain;
+            avail -= remain;
+            nbytes -= remain;
+            remain = 0;
         }
+        // else
+        // {
+        //     cq += avail;
+        //     cp += avail;
+        //     openTable->offset += avail;
+        //     count += avail;
+        //     avail -= avail;
+        //     nbytes -= avail;
+        //     remain = 0;
+        // }
+        // while (remain > 0)
+        // {
+        //     *cq++ = *cp++;
+        //     openTable->offset++;
+        //     count++;
+        //     avail--, nbytes--, remain--;
+
+        //     if (nbytes <= 0 || avail <= 0)
+        //         break;
+        // }
         // printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if one data block is not enough, loop back to OUTER while for more
     }
