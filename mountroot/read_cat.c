@@ -67,7 +67,7 @@ int myRead(int fd, char *buf, int nbytes)
     MINODE *mip;
     INODE *ip;
 
-    int count = 0, avail, lbk, blk, start, remain;
+    int count = 0, avail, lbk, blk, start, remain, optimize;
     char *cq = buf, *cp, readBuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE], temp[BLKSIZE];
 
     // get openTable from running process
@@ -124,6 +124,31 @@ int myRead(int fd, char *buf, int nbytes)
         cp = readBuf + start;
         remain = BLKSIZE - start; // number of bytes remain in readBuf[]
 
+        // optimize acts as a remain temp
+        optimize = remain;
+
+        // if nbytes < remain, set optimize to nbytes
+        if(nbytes < optimize)
+        {
+            optimize = nbytes;
+        }
+
+        // if avail < optimize, set optimize to avail
+        if(avail < optimize)
+        {
+            optimize = avail;
+        }
+
+        // read optimize characters at a time
+        // increment and decrement variables accordingly
+        memcpy(cq, cp, optimize);
+        *cp += optimize;
+        openTable->offset += optimize;
+        count += optimize;
+        avail -= optimize;
+        nbytes -= optimize;
+        remain -= optimize;
+
         // printf("Entering inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if (remain > 0)
         // {
@@ -152,16 +177,16 @@ int myRead(int fd, char *buf, int nbytes)
         // }
         // else
         //     break;
-        while (remain > 0)
-        {
-            *cq++ = *cp++;
-            openTable->offset++;
-            count++;
-            avail--, nbytes--, remain--;
+        // while (remain > 0)
+        // {
+        //     *cq++ = *cp++;
+        //     openTable->offset++;
+        //     count++;
+        //     avail--, nbytes--, remain--;
 
-            if (nbytes <= 0 || avail <= 0)
-                break;
-        }
+        //     if (nbytes <= 0 || avail <= 0)
+        //         break;
+        // }
         //printf("Exiting inner while loop | offset=%d, cp=%s, remain=%d\n", openTable->offset, cp, remain);
         // if one data block is not enough, loop back to OUTER while for more
     }
