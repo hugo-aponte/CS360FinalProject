@@ -69,6 +69,7 @@ int myRead(int fd, char *buf, int nbytes)
 
     int count = 0, avail, lbk, blk, start, remain, optimize;
     char *cq = buf, *cp, readBuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE], temp[BLKSIZE];
+    int ibuf[256], ibuf2[256];
 
     // get openTable from running process
     openTable = running->fd[fd];
@@ -98,15 +99,17 @@ int myRead(int fd, char *buf, int nbytes)
         {
             // indirect blocks
             get_block(mip->dev, ip->i_block[12], indirect);
-            memcpy(&blk, &indirect[(lbk - 12) * 4], sizeof(int));
-            //blk = indirect[(lbk * 4) - 12];
+            memcpy(&ibuf, &indirect, BLKSIZE);
+            blk = ibuf[lbk - 12];
         }
         else
         {
             // double indirect blocks
             get_block(mip->dev, ip->i_block[13], indirect);
-            get_block(mip->dev, indirect[((lbk - (256 + 12)) * 4) / BLKSIZE], doubleIndirect);
-            memcpy(&blk, &doubleIndirect[((lbk - (256 + 12)) * 4) % BLKSIZE], sizeof(int));
+            memcpy(&ibuf, &indirect, BLKSIZE);
+            get_block(mip->dev, ibuf[(lbk - (256 + 12)) / 256], doubleIndirect);
+            memcpy(&ibuf2, &doubleIndirect, BLKSIZE);
+            blk = ibuf2[(lbk - (256 + 12)) % BLKSIZE];
         }
 
         // get the data block into readBuf[BLKSIZE]
@@ -128,13 +131,13 @@ int myRead(int fd, char *buf, int nbytes)
         optimize = remain;
 
         // if nbytes < remain, set optimize to nbytes
-        if(nbytes < optimize)
+        if (nbytes < optimize)
         {
             optimize = nbytes;
         }
 
         // if avail < optimize, set optimize to avail
-        if(avail < optimize)
+        if (avail < optimize)
         {
             optimize = avail;
         }
