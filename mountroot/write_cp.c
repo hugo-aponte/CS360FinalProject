@@ -33,7 +33,7 @@ int mywrite(int fd, char buf[], int nbytes)
 
     int count = 0, avail, lbk, blk, iblk, start, remain, *offset;
     char *cq = buf, *cp, wbuf[BLKSIZE], indirect[BLKSIZE], doubleIndirect[BLKSIZE];
-    char ibuf[BLKSIZE];
+    int ibuf[256];
 
     // get oftp from running process
     oftp = running->fd[fd];
@@ -68,7 +68,7 @@ int mywrite(int fd, char buf[], int nbytes)
         }
         else if (lbk >= 12 && lbk < (256 + 12))
         { // INDIRECT blocks
-            printf("\n\nindirect blocks\n\n");
+            //printf("\n\nindirect blocks\n\n");
             // HELP INFO:
             if (ip->i_block[12] == 0)
             {
@@ -77,17 +77,22 @@ int mywrite(int fd, char buf[], int nbytes)
                 bzero(indirect, BLKSIZE);
                 put_block(mip->dev, ip->i_block[12], indirect);
             }
+
             // get i_block[12] into an int ibuf[256];
-            get_block(mip->dev, ip->i_block[12], ibuf);
-            memcpy(&blk, &ibuf[(lbk - 12) * 4], sizeof(int));
+            get_block(mip->dev, ip->i_block[12], indirect);
+            memcpy(&ibuf, &indirect, BLKSIZE);
+            blk = ibuf[lbk - 12];
             if (blk == 0)
             {
                 // allocate a disk block;
                 // record it in i_block[12];
                 blk = balloc(mip->dev);
-                // memcpy(&ibuf[(lbk - 12) * 4], &blk, sizeof(int));
+                // get_block(mip->dev, blk, indirect);
+                // bzero(indirect, BLKSIZE);
+                ibuf[lbk - 12] = blk;
+                memcpy(&indirect, &ibuf, BLKSIZE);
+                put_block(mip->dev, ip->i_block[12], indirect);
             }
-            put_block(mip->dev, ip->i_block[12], ibuf);
         }
         // else
         // {

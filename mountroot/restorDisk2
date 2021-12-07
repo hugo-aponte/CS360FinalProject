@@ -1,4 +1,0 @@
-#!/bin/bash
-
-rm -rf ./disk2
-cp ./disks/disk2 ./

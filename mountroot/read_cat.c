@@ -205,7 +205,7 @@ int myCat()
 {
     // printf("\nEntering myCat\n");
 
-    char mybuf[BLKSIZE] = "\0", dummy = 0;
+    char mybuf[BLKSIZE + 1] = "\0", dummy = 0;
     int n, fd;
     mode = RD;
 

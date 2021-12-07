@@ -67,7 +67,7 @@ int quit()
   exit(0);
 }
 
-char *disk = "disk2";
+char *disk = "disk";
 int main(int argc, char *argv[])
 {
   int ino;
@@ -95,6 +95,7 @@ int main(int argc, char *argv[])
 
   printf("EXT2 FS OK\n");
   ninodes = sp->s_inodes_count;
+  printf("number of inodes = %d\n", sp->s_inodes_count);
   nblocks = sp->s_blocks_count;
 
   get_block(dev, 2, buf);

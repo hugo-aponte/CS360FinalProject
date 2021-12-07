@@ -1,0 +1,96 @@
+                   LAB2 Check List
+
+Use YOUR C program source file in the tests.
+
+// Simple commands
+ls -a -l                       : show the ls results of CWD
+cat file                       : show file contents
+
+// Choose gedit OR nano OR vi OR emacs as the EDITOR
+EDITOR file                    : show you can edit the file
+
+// I/O redirections		   
+cat file > out; ls -l; cat out : show out file exist and show its contents
+cat file >> out; ls -l         : show out file size doubled
+cat < file                     : show file contents
+
+// PIPES
+cat file | grep printf         : show lines containing printf
+
+cat < file | grep printf > out : show pipe with I/O redirection
+
+cat file | grep printf | more  : two pipes
+      
+cat file | cat | cat | grep printf : multiple pipes
+<html>
+<body>
+<pre>
+                    LAB2pre Check List
+
+1. Outputs show executions of the commands?____________________ %80
+
+ P1: fork    ==> show P1 childList as P2, which is in readyQueue
+     switch  ==> switch to run P2
+		  
+ P2: fork; fork; ==> show P2 childList as P3->P4, which are in readyQueue
+     exit        ==> P2 become a ZOMBIE => switch to P1
+
+ P1:                 show P1 childList as P2->P3->P4
+ P1: wait        ==> find ZOMBIE P2 and put it into freeList
+     wait        ==> P1 should sleep in wait(), until a child becomes ZOMBIE
+                    (P1 sleeps, not runable, so switch to P3)
+		  
+ P3: exit        ==> wakeup P1, which will FREE the ZOMBIE P3.
+
+2. Used function pointers to invoke commands? _______________  %20
+
+                  CS360 LAB #2 Pre-Work
+                 DUE: 1-30-2020 in class
+
+1. Copy/paste/RUN Example programs C2.1 to C2.4 in textbook: NO NEED TO TURN IN
+
+2. Download files from ~samples/LAB2pre/:
+  (1). type.h, queue.c, t.c, wait.c, s.s
+                        
+  (2). gcc -m32 t.c s.s  # NOTE: must use -m32 to generate 32-bit code
+
+  (3). Run a.out as demonstrated in class
+
+
+============================== REQUIREMENTS ===========================
+3. Programming Assignment in 3.6:
+
+(1). Modify kfork() to implement the process tree as a BINARY tree.
+
+(2). Implement ksleep(), kwakeup() for process synchronization
+
+(3). Modify kexit() per algorithm in 3.5.1.
+     When a proc exits, give away children, if any, to P1.
+
+(4). Implement kwait() as in 3.5.3.
+
+(5). Add a "wait" command to allow (running) proc to wait for a ZOMBIE child
+
+(6). Use function pointers to invoke command executions
+	       
+=========================================================================
+              Turn in a hardcopy of your work. 
+
+ Run the command sequence: Use a script file to record YOUR outputs
+	       
+ P1: fork    ==> show P1 childList as P2, which is in readyQueue
+     switch  ==> switch to run P2
+		  
+ P2: fork; fork; ==> show P2 childList as P3->P4, which are in readyQueue
+     exit        ==> P2 become a ZOMBIE => switch to P1
+
+ P1:                 show P1 childList as P2->P3->P4
+ P1: wait        ==> find ZOMBIE P2 and put it into freeList
+     wait        ==> P1 should sleep in wait(), until a child becomes ZOMBIE
+                    (P1 sleeps, not runable, so switch to P3)
+		  
+ P3: exit        ==> wakeup P1, which will FREE the ZOMBIE P3.
+
+sample solution: ~samples/LAB2pre/solution	       
+
+========== END OF small FILE =============

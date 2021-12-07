@@ -69,6 +69,7 @@ int balloc(int dev)
          return i + 1;
       }
    }
+   printf("no more inodes, max = %d", ninodes);
    return 0;
 }
 

@@ -1,0 +1,8 @@
+sudo rm -rf disk
+
+sudo dd if=/dev/zero of=disk bs=1024 count=10000
+sudo mke2fs -b 1024 disk 10000
+
+sudo mount disk /mnt/
+sudo cp buf/* /mnt
+sudo umount disk
