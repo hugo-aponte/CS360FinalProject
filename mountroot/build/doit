@@ -1,0 +1,7 @@
+#sudo mke2fs -b 1024 disk 2440 # renew the disk image file
+#sudo ./s
+sudo ./s2
+echo "making now"
+sudo ./mk
+echo "running now"
+sudo ./a.out

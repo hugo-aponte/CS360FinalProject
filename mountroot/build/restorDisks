@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# rm -rf ./disk
+# cp ./disks/disk ./
+
+rm -rf ./disk
+cp ../disks/empty ./disk
+
+# rm -rf ./disk
+# cp ../disks/read ./disk

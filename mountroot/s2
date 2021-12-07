@@ -1,7 +1,0 @@
-#!/bin/bash
-./restorDisks
-sudo mount disk /mnt/
-#sudo mount read /mnt/
-
-ls -a -i -l /mnt # show . and .., inode number, long format
-sudo umount /mnt
