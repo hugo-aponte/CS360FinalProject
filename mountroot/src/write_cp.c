@@ -119,7 +119,7 @@ int mywrite(int fd, char buf[], int nbytes)
                 blk = balloc(mip->dev);
                 ibuf2[(lbk - (256 + 12)) % 256] = blk;
                 memcpy(&doubleIndirect, &ibuf2, BLKSIZE);
-                put_block(mip->dev, ibuf2[(lbk - (256 + 12)) / 256], doubleIndirect);
+                put_block(mip->dev, ibuf[(lbk - (256 + 12)) / 256], doubleIndirect);
             }
         }
 

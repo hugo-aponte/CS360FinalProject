@@ -67,7 +67,7 @@ int quit()
   exit(0);
 }
 
-char *disk = "disk";
+char *disk = "disk2";
 int main(int argc, char *argv[])
 {
   int ino;

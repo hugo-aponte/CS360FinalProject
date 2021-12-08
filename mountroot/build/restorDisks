@@ -4,7 +4,7 @@
 # cp ../disks/disk3 ./disk
 
 rm -rf ./disk
-cp ../disks/disk2 ./disk
+cp ../disks/disk2 ./disk2
 
 # rm -rf ./disk
 # cp ../disks/empty ./disk
