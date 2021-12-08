@@ -25,6 +25,7 @@ int enter_child(MINODE *pip, DIR *fPtr)
     int remain;
     DIR *dp, *newFile;
 
+    //traverse all direct blocks
     for (int i = 0; i < 12; i++)
     {
         printf("inside block%d\n", i);
