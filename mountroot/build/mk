@@ -1,6 +1,5 @@
-rm a.out 2> /dev/null
+#!/bin/bash
+rm a.out 2>/dev/null
 
 echo "compiling"
 gcc ../src/main.c ../src/util.c ../src/cd_ls_pwd.c ../src/mkdir_creat.c ../src/link_unlink.c ../src/symlink.c ../src/rmdir.c ../src/open_close_lseek.c ../src/read_cat.c ../src/write_cp.c
-
-

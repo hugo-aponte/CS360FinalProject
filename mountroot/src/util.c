@@ -691,6 +691,7 @@ DIR kmkdir(MINODE *pmip, char *fileName)
    dirPtr.rec_len = 4 * ((8 + dirPtr.name_len + 3) / 4);
    // printf("new dir name: %s\n", dirPtr.name);
 
+   // notice that ente_child is called with pmip
    enter_child(pmip, &dirPtr);
    // printf("past enter_child");
 
