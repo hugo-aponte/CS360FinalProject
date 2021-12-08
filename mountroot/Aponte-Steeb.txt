@@ -94,7 +94,7 @@ EXAMPLE: how to mkdir?
 
                 This will be YOUR DEMO record.
 
-NAME: Hugo Aponte ID:   NAME: Joseph Steeb ID: 11751063
+NAME: Hugo Aponte ID: 11684812  NAME: Joseph Steeb ID: 11751063
 
 0. Do EECS online course evaluation. 
 1. Fill in NAMEs, IDs. Return to TA before 12-8-2021.
